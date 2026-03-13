@@ -1,97 +1,96 @@
-import { ReportStatus, ReportType } from '../types';
+import { Domain, PerformanceZone } from '../types';
 
-export const getStatusColor = (status: ReportStatus): string => {
-  switch (status) {
-    case 'published':
-      return '#10B981';
-    case 'draft':
-      return '#F59E0B';
-    case 'pending':
-      return '#3B82F6';
-    case 'archived':
-      return '#6B7280';
-    default:
-      return '#6B7280';
+// ── Domain metadata ──────────────────────────────────────────────────────────
+
+export const getDomainColor = (domain: Domain): string => {
+  switch (domain) {
+    case 'Motor':         return '#6366F1';
+    case 'Sensory':       return '#3B82F6';
+    case 'Behavior':      return '#F59E0B';
+    case 'Communication': return '#10B981';
+    case 'Academic':      return '#8B5CF6';
+    case 'Health':        return '#EC4899';
+    default:              return '#6B7280';
   }
 };
 
-export const getStatusLabel = (status: ReportStatus): string => {
-  switch (status) {
-    case 'published':
-      return 'Published';
-    case 'draft':
-      return 'Draft';
-    case 'pending':
-      return 'Pending';
-    case 'archived':
-      return 'Archived';
-    default:
-      return status;
+export const getDomainIcon = (domain: Domain): string => {
+  switch (domain) {
+    case 'Motor':         return 'body';
+    case 'Sensory':       return 'eye';
+    case 'Behavior':      return 'heart';
+    case 'Communication': return 'chatbubbles';
+    case 'Academic':      return 'school';
+    case 'Health':        return 'medkit';
+    default:              return 'ellipse';
   }
 };
 
-export const getTypeLabel = (type: ReportType): string => {
-  switch (type) {
-    case 'performance':
-      return 'Performance';
-    case 'engagement':
-      return 'Engagement';
-    case 'revenue':
-      return 'Revenue';
-    case 'activity':
-      return 'Activity';
-    case 'compliance':
-      return 'Compliance';
-    default:
-      return type;
+export const DOMAINS: Domain[] = [
+  'Motor', 'Sensory', 'Behavior', 'Communication', 'Academic', 'Health',
+];
+
+// ── Performance zones ────────────────────────────────────────────────────────
+// Lower % = better (fewer symptoms)
+
+export const getZone = (pct: number): PerformanceZone => {
+  if (pct < 25)  return 'high';
+  if (pct < 50)  return 'medium';
+  return 'low';
+};
+
+export const getZoneColor = (zone: PerformanceZone): string => {
+  switch (zone) {
+    case 'high':   return '#10B981'; // green — typical range
+    case 'medium': return '#F59E0B'; // amber — minimal weakness
+    case 'low':    return '#EF4444'; // red   — moderate/severe weakness
   }
 };
 
-export const getTypeIcon = (type: ReportType): string => {
-  switch (type) {
-    case 'performance':
-      return 'trending-up';
-    case 'engagement':
-      return 'people';
-    case 'revenue':
-      return 'cash';
-    case 'activity':
-      return 'pulse';
-    case 'compliance':
-      return 'shield-checkmark';
-    default:
-      return 'document-text';
+export const getZoneLabel = (zone: PerformanceZone): string => {
+  switch (zone) {
+    case 'high':   return 'Typical Range';
+    case 'medium': return 'Mild Weakness';
+    case 'low':    return 'Area of Focus';
   }
 };
 
-export const getTypeColor = (type: ReportType): string => {
-  switch (type) {
-    case 'performance':
-      return '#6366F1';
-    case 'engagement':
-      return '#10B981';
-    case 'revenue':
-      return '#F59E0B';
-    case 'activity':
-      return '#3B82F6';
-    case 'compliance':
-      return '#8B5CF6';
-    default:
-      return '#6B7280';
-  }
+export const getZoneShort = (zone: PerformanceZone): string => {
+  switch (zone) { case 'high': return 'HIGH'; case 'medium': return 'MED'; case 'low': return 'LOW'; }
 };
+
+// ── Exercise helpers ─────────────────────────────────────────────────────────
+
+export const getPctColor = (pct: number): string => {
+  if (pct >= 80) return '#10B981';
+  if (pct >= 60) return '#F59E0B';
+  return '#EF4444';
+};
+
+// ── Formatting ───────────────────────────────────────────────────────────────
 
 export const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const d = new Date(dateString);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-export const formatNumber = (num: number): string => {
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-  return num.toString();
+export const formatDateShort = (dateString: string): string => {
+  const d = new Date(dateString);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
+
+export const formatNumber = (n: number): string => {
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return n.toString();
+};
+
+// ── Progress calculation ─────────────────────────────────────────────────────
+// Returns % reduction (positive = improvement, negative = decline)
+
+export const calcImprovement = (before: number, after: number): number => {
+  if (before === 0) return 0;
+  return Math.round(((before - after) / before) * 100);
+};
+
+export const calcPointChange = (before: number, after: number): number =>
+  Math.round((before - after) * 10) / 10;

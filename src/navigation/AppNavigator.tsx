@@ -1,18 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import DashboardScreen from '../screens/DashboardScreen';
-import ReportsScreen from '../screens/ReportsScreen';
-import AnalyticsScreen from '../screens/AnalyticsScreen';
-import ProfileScreen from '../screens/ProfileScreen';
+import HomeScreen        from '../screens/HomeScreen';
+import ProgressScreen    from '../screens/ProgressScreen';
+import SessionsScreen    from '../screens/SessionsScreen';
+import AssessmentsScreen from '../screens/AssessmentsScreen';
 import { colors, typography } from '../utils/theme';
-import { mockNotifications } from '../data/mockData';
 
 const Tab = createBottomTabNavigator();
-
-const unreadCount = mockNotifications.filter((n) => !n.read).length;
 
 export default function AppNavigator() {
   return (
@@ -24,34 +21,22 @@ export default function AppNavigator() {
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.textMuted,
           tabBarLabelStyle: styles.tabLabel,
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName: keyof typeof Ionicons.glyphMap;
-
-            if (route.name === 'Dashboard') {
-              iconName = focused ? 'home' : 'home-outline';
-            } else if (route.name === 'Reports') {
-              iconName = focused ? 'document-text' : 'document-text-outline';
-            } else if (route.name === 'Analytics') {
-              iconName = focused ? 'bar-chart' : 'bar-chart-outline';
-            } else {
-              iconName = focused ? 'person' : 'person-outline';
-            }
-
-            return (
-              <View style={styles.iconContainer}>
-                <Ionicons name={iconName} size={22} color={color} />
-                {route.name === 'Dashboard' && unreadCount > 0 && (
-                  <View style={styles.notifDot} />
-                )}
-              </View>
-            );
+          tabBarIcon: ({ focused, color }) => {
+            const icons: Record<string, [string, string]> = {
+              Home:        ['home',         'home-outline'],
+              Progress:    ['trending-up',  'trending-up-outline'],
+              Sessions:    ['game-controller', 'game-controller-outline'],
+              Assessments: ['clipboard',    'clipboard-outline'],
+            };
+            const [active, inactive] = icons[route.name] ?? ['ellipse', 'ellipse-outline'];
+            return <Ionicons name={(focused ? active : inactive) as any} size={22} color={color} />;
           },
         })}
       >
-        <Tab.Screen name="Dashboard" component={DashboardScreen} />
-        <Tab.Screen name="Reports" component={ReportsScreen} />
-        <Tab.Screen name="Analytics" component={AnalyticsScreen} />
-        <Tab.Screen name="Profile" component={ProfileScreen} />
+        <Tab.Screen name="Home"        component={HomeScreen}        options={{ tabBarLabel: 'Home' }} />
+        <Tab.Screen name="Progress"    component={ProgressScreen}    options={{ tabBarLabel: 'Progress' }} />
+        <Tab.Screen name="Sessions"    component={SessionsScreen}    options={{ tabBarLabel: 'Sessions' }} />
+        <Tab.Screen name="Assessments" component={AssessmentsScreen} options={{ tabBarLabel: 'Assessments' }} />
       </Tab.Navigator>
     </NavigationContainer>
   );
@@ -75,19 +60,5 @@ const styles = StyleSheet.create({
     ...typography.caption,
     fontWeight: '600',
     marginTop: 2,
-  },
-  iconContainer: {
-    position: 'relative',
-  },
-  notifDot: {
-    position: 'absolute',
-    top: -2,
-    right: -4,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.danger,
-    borderWidth: 1.5,
-    borderColor: colors.surface,
   },
 });
