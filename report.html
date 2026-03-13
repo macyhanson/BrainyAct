@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BrainyAct — Abilities &amp; Progress Report · Liam Kerrigan</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #1D4ED8;
+    --primary-light: #EFF6FF;
+    --green: #10B981; --green-bg: #D1FAE5; --green-text: #065F46;
+    --yellow: #F59E0B; --yellow-bg: #FEF3C7; --yellow-text: #92400E;
+    --red: #EF4444; --red-bg: #FEE2E2; --red-text: #991B1B;
+    --motor: #6366F1; --sensory: #3B82F6; --behavior: #F59E0B;
+    --communication: #10B981; --academic: #8B5CF6; --health: #EC4899;
+    --text: #0F172A; --text-sec: #475569; --text-muted: #94A3B8;
+    --border: #E2E8F0; --surface: #fff; --bg: #F8FAFC;
+    --radius: 12px; --radius-sm: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); }
+
+  /* ── Print ── */
+  @media print {
+    body { background: #fff; }
+    .no-print { display: none !important; }
+    .page-break { page-break-before: always; }
+    .card { box-shadow: none !important; border: 1px solid var(--border) !important; }
+  }
+
+  /* ── Layout ── */
+  .page { max-width: 900px; margin: 0 auto; padding: 24px 16px 64px; }
+
+  /* ── Header ── */
+  .site-header {
+    background: linear-gradient(135deg, #1E40AF 0%, #1D4ED8 50%, #2563EB 100%);
+    padding: 0 24px;
+  }
+  .site-header-inner {
+    max-width: 900px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0;
+  }
+  .logo { font-size: 22px; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
+  .logo span { color: #93C5FD; }
+  .header-badge {
+    background: rgba(255,255,255,0.18); border-radius: 20px;
+    padding: 6px 14px; color: #fff; font-size: 13px; font-weight: 600;
+  }
+
+  /* ── Child hero ── */
+  .hero {
+    background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
+    border-radius: var(--radius); padding: 28px; margin-bottom: 24px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    flex-wrap: wrap; gap: 20px; color: #fff;
+  }
+  .hero-name { font-size: 28px; font-weight: 900; margin-bottom: 6px; }
+  .hero-meta { font-size: 14px; opacity: 0.85; margin-bottom: 12px; }
+  .hero-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
+  }
+  .badge-white { background: rgba(255,255,255,0.22); color: #fff; }
+  .badge-red   { background: rgba(239,68,68,0.25); color: #FCA5A5; }
+  .hero-stats {
+    display: flex; gap: 0; background: rgba(255,255,255,0.15);
+    border-radius: 10px; overflow: hidden;
+  }
+  .hero-stat { padding: 14px 20px; text-align: center; }
+  .hero-stat + .hero-stat { border-left: 1px solid rgba(255,255,255,0.2); }
+  .hero-stat-val { font-size: 24px; font-weight: 900; }
+  .hero-stat-lbl { font-size: 11px; opacity: 0.75; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── Progress ring ── */
+  .hero-ring {
+    width: 100px; height: 100px; border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    border: 4px solid rgba(255,255,255,0.5);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .hero-ring-val { font-size: 26px; font-weight: 900; }
+  .hero-ring-lbl { font-size: 11px; opacity: 0.75; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 20px; margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .card-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .card-sub { font-size: 13px; color: var(--text-sec); margin-bottom: 16px; }
+
+  /* ── Section title ── */
+  .section-title {
+    font-size: 18px; font-weight: 800; color: var(--text);
+    margin: 28px 0 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after {
+    content: ''; flex: 1; height: 2px; background: var(--border);
+  }
+
+  /* ── Legend ── */
+  .zone-legend {
+    display: flex; gap: 20px; flex-wrap: wrap;
+    background: #F0FDF4; border: 1px solid #A7F3D0;
+    border-radius: var(--radius-sm); padding: 14px 18px; margin-bottom: 20px;
+  }
+  .zone-legend-title { font-size: 13px; font-weight: 700; color: var(--green-text); width: 100%; margin-bottom: 6px; }
+  .zone-item { display: flex; align-items: center; gap: 7px; }
+  .zone-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .zone-label { font-size: 12px; font-weight: 700; }
+  .zone-range { font-size: 11px; color: var(--text-muted); }
+
+  /* ── Domain bars ── */
+  .domain-bar-block { margin-bottom: 16px; }
+  .domain-bar-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+  }
+  .domain-icon {
+    width: 30px; height: 30px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0;
+  }
+  .domain-name { font-size: 14px; font-weight: 700; flex: 1; }
+  .zone-pill {
+    display: flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+  }
+  .change-pill {
+    display: flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700;
+  }
+  .change-pill.improve { background: var(--green-bg); color: var(--green-text); }
+  .change-pill.decline { background: var(--red-bg);   color: var(--red-text); }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+  .bar-lbl { font-size: 11px; color: var(--text-muted); width: 72px; flex-shrink: 0; }
+  .bar-track {
+    flex: 1; height: 12px; background: #F1F5F9; border-radius: 6px; overflow: hidden;
+  }
+  .bar-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease; }
+  .bar-pct { font-size: 12px; font-weight: 700; width: 42px; text-align: right; flex-shrink: 0; }
+
+  /* ── Summary comparison table ── */
+  .baseline-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;
+  }
+  .baseline-card {
+    background: var(--bg); border-radius: var(--radius-sm); border: 1px solid var(--border);
+    padding: 14px; text-align: center;
+  }
+  .baseline-card.active { background: var(--primary-light); border-color: var(--primary); }
+  .baseline-num { font-size: 11px; font-weight: 700; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px; }
+  .baseline-date { font-size: 11px; color: var(--text-muted); margin: 3px 0 8px; }
+  .baseline-pct { font-size: 26px; font-weight: 900; }
+
+  /* ── Radar chart ── */
+  .radar-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .radar-legend { display: flex; gap: 20px; }
+  .radar-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-sec); font-weight: 600; }
+  .radar-legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .radar-hint { font-size: 11px; color: var(--text-muted); }
+
+  /* ── Session table ── */
+  .session-table { width: 100%; border-collapse: collapse; }
+  .session-table th {
+    text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-sec); padding: 8px 10px; border-bottom: 2px solid var(--border);
+    background: var(--bg);
+  }
+  .session-table td { padding: 10px 10px; border-bottom: 1px solid #F1F5F9; font-size: 13px; }
+  .session-table tr:last-child td { border-bottom: none; }
+  .session-table tr:hover td { background: #F8FAFC; }
+  .acc-bar-inline {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .acc-track { width: 80px; height: 8px; background: #F1F5F9; border-radius: 4px; overflow: hidden; flex-shrink: 0; }
+  .acc-fill  { height: 100%; border-radius: 4px; }
+
+  /* ── Exercise list ── */
+  .exercise-grid { display: grid; gap: 10px; }
+  .exercise-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; background: var(--bg); border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+  }
+  .ex-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .ex-name { font-size: 13px; font-weight: 600; flex: 1; }
+  .ex-meta { font-size: 11px; color: var(--text-muted); }
+  .ex-pct { font-size: 14px; font-weight: 800; width: 44px; text-align: right; }
+  .ex-coins { font-size: 11px; color: var(--yellow); font-weight: 600; width: 52px; text-align: right; }
+
+  /* ── Improvements ── */
+  .improvements-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .improvement-card {
+    background: var(--surface); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 18px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .improvement-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .improvement-icon {
+    width: 38px; height: 38px; border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+    flex-shrink: 0;
+  }
+  .improvement-title { font-size: 14px; font-weight: 700; }
+  .improvement-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .improvement-list li {
+    font-size: 12px; color: var(--text-sec); display: flex; align-items: flex-start; gap: 7px;
+    line-height: 1.5;
+  }
+  .check {
+    width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0; margin-top: 1px;
+    font-size: 9px; color: #fff;
+  }
+
+  /* ── Cross-baseline comparison ── */
+  .comp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .comp-table th {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-sec); padding: 8px 12px; border-bottom: 2px solid var(--border);
+    background: var(--bg); text-align: center;
+  }
+  .comp-table th:first-child { text-align: left; }
+  .comp-table td { padding: 9px 12px; border-bottom: 1px solid #F1F5F9; text-align: center; }
+  .comp-table td:first-child { text-align: left; font-weight: 600; }
+  .comp-table tr:last-child td { border-bottom: none; }
+  .comp-table .comp-total td {
+    background: #1E293B; color: #fff; font-weight: 800; border-bottom: none;
+  }
+  .comp-table tr:nth-child(even) td { background: #F8FAFC; }
+  .comp-table .comp-total td { background: #1E293B !important; }
+  .domain-dot-sm { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; vertical-align: middle; }
+
+  /* ── Coins ── */
+  .coin { color: #F59E0B; }
+
+  /* ── Footer ── */
+  .report-footer {
+    margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border);
+    text-align: center; font-size: 12px; color: var(--text-muted);
+  }
+
+  /* ── Print button ── */
+  .print-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--primary); color: #fff; border: none; border-radius: var(--radius-sm);
+    padding: 10px 18px; font-size: 13px; font-weight: 700; cursor: pointer;
+    margin-bottom: 20px;
+  }
+  .print-btn:hover { background: #1E40AF; }
+
+  /* ── Trend bars ── */
+  .trend-chart { display: flex; align-items: flex-end; gap: 6px; height: 100px; margin-top: 10px; }
+  .trend-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .trend-bar { width: 100%; border-radius: 4px 4px 0 0; min-height: 2px; transition: height 0.4s ease; }
+  .trend-label { font-size: 9px; color: var(--text-muted); }
+
+  /* responsive */
+  @media (max-width: 600px) {
+    .hero { flex-direction: column; }
+    .hero-stats { align-self: stretch; }
+    .baseline-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .improvements-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Site header -->
+<div class="site-header">
+  <div class="site-header-inner">
+    <div class="logo">Brainy<span>Act</span></div>
+    <div class="header-badge">Family Progress Report</div>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- Print button -->
+  <button class="print-btn no-print" onclick="window.print()">
+    🖨️ Print / Save as PDF
+  </button>
+
+  <!-- ── Child Hero ── -->
+  <div class="hero">
+    <div>
+      <div class="hero-name">Liam Kerrigan</div>
+      <div class="hero-meta">Gamer: liam5 · Age 9 · 3rd Grade · Report generated Mar 13, 2026</div>
+      <div class="hero-badges">
+        <span class="badge badge-white">🎮 38 Play Sessions</span>
+        <span class="badge badge-white">📋 3 Baselines</span>
+        <span class="badge badge-red">⚡ Right-Brain Deficit Focus</span>
+        <span class="badge badge-white">🪙 8,260 Coins Earned</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-val">3</div>
+          <div class="hero-stat-lbl">Baselines</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-val">38</div>
+          <div class="hero-stat-lbl">Play Sessions</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-val">41</div>
+          <div class="hero-stat-lbl">Total Sessions</div>
+        </div>
+      </div>
+      <div class="hero-ring">
+        <div class="hero-ring-val">42%</div>
+        <div class="hero-ring-lbl">better</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Performance Zone Legend ── -->
+  <div class="zone-legend">
+    <div class="zone-legend-title">📖 How to read this report: Lower % = fewer symptoms detected = better</div>
+    <div class="zone-item">
+      <div class="zone-dot" style="background:var(--green)"></div>
+      <div><div class="zone-label" style="color:var(--green)">Typical Range</div><div class="zone-range">0 – 24.9%</div></div>
+    </div>
+    <div class="zone-item">
+      <div class="zone-dot" style="background:var(--yellow)"></div>
+      <div><div class="zone-label" style="color:var(--yellow)">Mild Weakness</div><div class="zone-range">25 – 49.9%</div></div>
+    </div>
+    <div class="zone-item">
+      <div class="zone-dot" style="background:var(--red)"></div>
+      <div><div class="zone-label" style="color:var(--red)">Area of Focus</div><div class="zone-range">50% or more</div></div>
+    </div>
+  </div>
+
+  <!-- ── Baseline Overview ── -->
+  <div class="section-title">Assessment Baselines</div>
+  <div class="baseline-grid">
+    <div class="baseline-card">
+      <div class="baseline-num">Baseline 1</div>
+      <div class="baseline-date">May 14, 2025 · Pre-program</div>
+      <div class="baseline-pct" style="color:var(--yellow)">49.4%</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">308 / 624 pts</div>
+      <div style="margin-top:8px"><span style="background:var(--yellow-bg);color:var(--yellow-text);padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700">Mild Weakness</span></div>
+    </div>
+    <div class="baseline-card">
+      <div class="baseline-num">Baseline 2</div>
+      <div class="baseline-date">Sep 10, 2025 · Mid-program</div>
+      <div class="baseline-pct" style="color:var(--yellow)">38.6%</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">241 / 624 pts</div>
+      <div style="margin-top:8px"><span style="background:var(--yellow-bg);color:var(--yellow-text);padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700">Mild Weakness</span></div>
+    </div>
+    <div class="baseline-card active">
+      <div class="baseline-num">Baseline 3 · Current</div>
+      <div class="baseline-date">Feb 24, 2026</div>
+      <div class="baseline-pct" style="color:var(--primary)">28.8%</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">180 / 624 pts</div>
+      <div style="margin-top:8px"><span style="background:var(--green-bg);color:var(--green-text);padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700">↓ 20.6 pts improved</span></div>
+    </div>
+  </div>
+
+  <!-- ── Domain Progress Bars ── -->
+  <div class="section-title">Domain Progress — Baseline 1 vs. Current</div>
+  <div class="card" style="padding:24px">
+    <div id="domain-bars"></div>
+  </div>
+
+  <!-- ── Cross-Baseline Comparison Table ── -->
+  <div class="section-title">All Baselines Comparison</div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="comp-table">
+      <thead>
+        <tr>
+          <th>Domain</th>
+          <th>Baseline 1<br><span style="font-size:10px;text-transform:none;letter-spacing:0;font-weight:400">May 2025</span></th>
+          <th>Baseline 2<br><span style="font-size:10px;text-transform:none;letter-spacing:0;font-weight:400">Sep 2025</span></th>
+          <th>Baseline 3<br><span style="font-size:10px;text-transform:none;letter-spacing:0;font-weight:400">Feb 2026</span></th>
+          <th>Change</th>
+        </tr>
+      </thead>
+      <tbody id="comp-table-body"></tbody>
+    </table>
+  </div>
+
+  <!-- ── Left vs Right Brain ── -->
+  <div class="section-title">Left vs Right Brain Scores</div>
+  <div class="card">
+    <div style="display:grid;grid-template-columns:1fr 1px 1fr;gap:20px;align-items:center">
+      <div style="text-align:center">
+        <div style="font-size:14px;font-weight:700;color:var(--text-sec);margin-bottom:8px">LEFT BRAIN</div>
+        <div style="font-size:11px;color:var(--red);margin-bottom:4px">Baseline 1: <strong>148 pts</strong></div>
+        <div style="font-size:11px;color:var(--yellow);margin-bottom:4px">Baseline 2: <strong>112 pts</strong></div>
+        <div style="font-size:11px;color:var(--green);margin-bottom:8px">Current: <strong>80 pts</strong></div>
+        <div style="background:var(--green-bg);color:var(--green-text);padding:4px 12px;border-radius:12px;font-size:12px;font-weight:700;display:inline-block">↓ 68 pts improved</div>
+      </div>
+      <div style="background:var(--border);height:80px"></div>
+      <div style="text-align:center">
+        <div style="font-size:14px;font-weight:700;color:var(--text-sec);margin-bottom:8px">RIGHT BRAIN</div>
+        <div style="font-size:11px;color:var(--red);margin-bottom:4px">Baseline 1: <strong>160 pts</strong></div>
+        <div style="font-size:11px;color:var(--yellow);margin-bottom:4px">Baseline 2: <strong>129 pts</strong></div>
+        <div style="font-size:11px;color:var(--green);margin-bottom:8px">Current: <strong>100 pts</strong></div>
+        <div style="background:var(--green-bg);color:var(--green-text);padding:4px 12px;border-radius:12px;font-size:12px;font-weight:700;display:inline-block">↓ 60 pts improved</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;background:#FEF2F2;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--red-text);display:flex;gap:6px;align-items:flex-start">
+      <span>⚡</span>
+      <span><strong>Right-brain deficit identified.</strong> BrainyAct targets both hemispheres with additional emphasis on the right hemisphere for Liam.</span>
+    </div>
+  </div>
+
+  <!-- ── Radar Chart ── -->
+  <div class="section-title">Progress Spider Chart</div>
+  <div class="card">
+    <div class="radar-wrap">
+      <svg id="radar" width="300" height="300" viewBox="0 0 300 300"></svg>
+      <div class="radar-legend">
+        <div class="radar-legend-item">
+          <div class="radar-legend-dot" style="background:rgba(239,68,68,0.7)"></div>
+          Baseline 1 (Start)
+        </div>
+        <div class="radar-legend-item">
+          <div class="radar-legend-dot" style="background:rgba(16,185,129,0.85)"></div>
+          Baseline 3 (Current)
+        </div>
+      </div>
+      <div class="radar-hint">Larger green area = greater improvement across domains</div>
+    </div>
+  </div>
+
+  <!-- ── Training Accuracy Trend ── -->
+  <div class="section-title">10-Week Training Accuracy Trend</div>
+  <div class="card">
+    <p class="card-sub" style="margin-bottom:4px">Average % correct per exercise across weekly training sessions. Higher = better performance.</p>
+    <div style="display:flex;gap:16px;margin-bottom:10px;flex-wrap:wrap">
+      <span style="font-size:12px;font-weight:700;color:var(--motor)">● Motor</span>
+      <span style="font-size:12px;font-weight:700;color:var(--sensory)">● Sensory</span>
+      <span style="font-size:12px;font-weight:700;color:var(--academic)">● Academic</span>
+    </div>
+    <div id="trend-chart" class="trend-chart"></div>
+  </div>
+
+  <!-- ── Latest Session ── -->
+  <div class="page-break"></div>
+  <div class="section-title">Latest Session — Play #38 (Nov 12, 2025)</div>
+  <div class="card">
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px">
+      <div style="text-align:center;min-width:80px">
+        <div style="font-size:22px;font-weight:900;color:var(--green)">87.1%</div>
+        <div style="font-size:11px;color:var(--text-muted)">Avg Accuracy</div>
+      </div>
+      <div style="text-align:center;min-width:80px">
+        <div style="font-size:22px;font-weight:900;color:var(--primary)">80.5</div>
+        <div style="font-size:11px;color:var(--text-muted)">Minutes</div>
+      </div>
+      <div style="text-align:center;min-width:80px">
+        <div style="font-size:22px;font-weight:900;color:var(--text)">99%</div>
+        <div style="font-size:11px;color:var(--text-muted)">🐢 Turtle Time</div>
+      </div>
+      <div style="text-align:center;min-width:80px">
+        <div style="font-size:22px;font-weight:900;color:var(--yellow)">8,260</div>
+        <div style="font-size:11px;color:var(--text-muted)">🪙 Total Coins</div>
+      </div>
+    </div>
+    <div class="exercise-grid" id="exercise-list"></div>
+  </div>
+
+  <!-- ── Session History ── -->
+  <div class="section-title">Session History Overview</div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="session-table">
+      <thead>
+        <tr>
+          <th>Session</th>
+          <th>Date</th>
+          <th>Play Time</th>
+          <th>🐢 Turtle</th>
+          <th>Avg Accuracy</th>
+          <th>🪙 Coins</th>
+          <th>Trend</th>
+        </tr>
+      </thead>
+      <tbody id="session-table-body"></tbody>
+    </table>
+  </div>
+
+  <!-- ── Real-Life Improvements ── -->
+  <div class="section-title">Real-Life Improvements Observed by BrainyAct Families</div>
+  <div class="improvements-grid" id="improvements-grid"></div>
+
+  <!-- ── Footer ── -->
+  <div class="report-footer">
+    <strong>BrainyAct</strong> — Neurodevelopmental Training Program · This report was generated from the BrainyAct portal assessment data.
+    <br>For questions about your child's progress, please contact your BrainyAct practitioner.
+    <br>Report Date: March 13, 2026
+  </div>
+
+</div><!-- /page -->
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────────
+const DOMAINS = ['Motor','Sensory','Behavior','Communication','Academic','Health'];
+const DOMAIN_COLORS = {
+  Motor:'#6366F1', Sensory:'#3B82F6', Behavior:'#F59E0B',
+  Communication:'#10B981', Academic:'#8B5CF6', Health:'#EC4899'
+};
+const DOMAIN_ICONS = {
+  Motor:'🏃', Sensory:'👁️', Behavior:'❤️', Communication:'💬', Academic:'🎓', Health:'💊'
+};
+
+const baselines = [
+  {
+    number:1, date:'May 14, 2025', total:49.4,
+    domains:{Motor:22.9,Sensory:34.3,Behavior:65.6,Communication:69.0,Academic:52.2,Health:12.5}
+  },
+  {
+    number:2, date:'Sep 10, 2025', total:38.6,
+    domains:{Motor:13.5,Sensory:23.5,Behavior:54.4,Communication:58.3,Academic:40.6,Health:4.2}
+  },
+  {
+    number:3, date:'Feb 24, 2026', total:28.8,
+    domains:{Motor:6.3,Sensory:15.7,Behavior:43.9,Communication:45.2,Academic:29.7,Health:0.0}
+  }
+];
+
+const sessions = [
+  {play:1,  date:'Aug 12, 2025', time:78.2, turtle:99, avg:57.3, coins:4548},
+  {play:8,  date:'Aug 26, 2025', time:81.4, turtle:97, avg:63.8, coins:5340},
+  {play:16, date:'Sep 9,  2025', time:83.1, turtle:98, avg:70.2, coins:6120},
+  {play:24, date:'Sep 30, 2025', time:79.5, turtle:99, avg:76.4, coins:6890},
+  {play:30, date:'Oct 21, 2025', time:82.0, turtle:99, avg:81.5, coins:7520},
+  {play:38, date:'Nov 12, 2025', time:80.5, turtle:99, avg:87.1, coins:8260},
+];
+
+const latestExercises = [
+  {name:'Hopscotch',          domain:'Motor',    pct:100.0, correct:16,  total:16,  level:3, coins:100,  levelUp:true},
+  {name:'Moving Sidewalk',    domain:'Motor',    pct:100.0, correct:11,  total:11,  level:3, coins:84,   levelUp:true},
+  {name:'Cross Crawl',        domain:'Motor',    pct:96.8,  correct:30,  total:31,  level:3, coins:162,  levelUp:true},
+  {name:'Sorting',            domain:'Academic', pct:97.2,  correct:140, total:144, level:2, coins:710,  levelUp:true},
+  {name:'B/D/P/Q Stick',      domain:'Academic', pct:95.1,  correct:39,  total:41,  level:3, coins:170,  levelUp:true},
+  {name:'Shoot the Object',   domain:'Sensory',  pct:100.0, correct:40,  total:40,  level:3, coins:140,  levelUp:true},
+  {name:'Figure Eights',      domain:'Motor',    pct:92.0,  correct:184, total:200, level:2, coins:184,  levelUp:true},
+  {name:'Twirling Robot',     domain:'Motor',    pct:100.0, correct:22,  total:22,  level:3, coins:66,   levelUp:true},
+  {name:'Dichotic Listening', domain:'Sensory',  pct:93.3,  correct:14,  total:15,  level:2, coins:86,   levelUp:true},
+  {name:'Digit',              domain:'Academic', pct:100.0, correct:7,   total:7,   level:2, coins:52,   levelUp:true},
+  {name:'Drawing',            domain:'Motor',    pct:100.0, correct:8,   total:8,   level:3, coins:56,   levelUp:true},
+  {name:'Dance',              domain:'Motor',    pct:74.5,  correct:76,  total:102, level:2, coins:445,  levelUp:true},
+  {name:'Dance Auditory',     domain:'Sensory',  pct:80.0,  correct:40,  total:50,  level:2, coins:328,  levelUp:true},
+  {name:'Piano Hands',        domain:'Motor',    pct:71.3,  correct:62,  total:87,  level:2, coins:155,  levelUp:true},
+  {name:'Camera Game',        domain:'Sensory',  pct:83.3,  correct:10,  total:12,  level:2, coins:84,   levelUp:true},
+];
+
+const weeklyTrends = [
+  {week:'Wk 1', Motor:71, Sensory:43, Academic:48},
+  {week:'Wk 2', Motor:74, Sensory:47, Academic:52},
+  {week:'Wk 3', Motor:76, Sensory:51, Academic:55},
+  {week:'Wk 4', Motor:79, Sensory:55, Academic:58},
+  {week:'Wk 5', Motor:82, Sensory:59, Academic:62},
+  {week:'Wk 6', Motor:85, Sensory:63, Academic:67},
+  {week:'Wk 7', Motor:87, Sensory:67, Academic:71},
+  {week:'Wk 8', Motor:90, Sensory:71, Academic:76},
+  {week:'Wk 9', Motor:92, Sensory:74, Academic:80},
+  {week:'Wk 10',Motor:95, Sensory:78, Academic:85},
+];
+
+const improvements = [
+  {title:'Cross-Body Coordination', icon:'🏃', color:'#6366F1', items:[
+    'Smoother, more coordinated movement patterns',
+    'Enhanced ability to follow multi-step directions',
+    'Can tie shoes or dress with less frustration',
+    'More coordinated when climbing playground equipment',
+    'Better rhythm when running, skipping, or swimming',
+  ]},
+  {title:'Balance & Postural Control', icon:'⚖️', color:'#3B82F6', items:[
+    'Increased endurance for seated learning',
+    'Less fidgeting due to better postural stability',
+    'Able to stay seated at dinner or during homework',
+    'Fewer falls or wobbly movements while playing',
+    'Improved bike, scooter, or balance beam skills',
+  ]},
+  {title:'Visual Tracking & Perception', icon:'👁️', color:'#10B981', items:[
+    'Improved reading fluency and tracking',
+    'Tracks words in a book without losing their place',
+    'Faster processing of visual instructions',
+    'Fewer headaches or meltdowns during homework',
+    'Easier copying from the board or screen',
+  ]},
+  {title:'Auditory & Rhythm Processing', icon:'👂', color:'#F59E0B', items:[
+    'Improved listening skills, fewer misunderstandings',
+    'Better timing and pacing in communication',
+    'Enhanced ability to follow verbal directions',
+    'Responds the first time when spoken to',
+    'Better ability to keep up with group conversations',
+  ]},
+  {title:'Eye-Hand Coordination', icon:'✋', color:'#8B5CF6', items:[
+    'Better handwriting — writes letters more neatly',
+    'Improved accuracy in sports and fine motor games',
+    'Can pour liquids with fewer spills',
+    'Better execution when building Legos or puzzles',
+    'Lines up math problems correctly on the page',
+  ]},
+  {title:'Cognitive-Motor Integration', icon:'💡', color:'#EC4899', items:[
+    'Fewer meltdowns during routine changes',
+    'Completes daily routines with less support',
+    'Remembers multi-step instructions more easily',
+    'Better focus and attention during structured tasks',
+    'Increased flexibility, patience, and emotional regulation',
+  ]},
+];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function zoneColor(pct) {
+  if (pct < 25) return '#10B981';
+  if (pct < 50) return '#F59E0B';
+  return '#EF4444';
+}
+function zoneLabel(pct) {
+  if (pct < 25) return 'Typical Range';
+  if (pct < 50) return 'Mild Weakness';
+  return 'Area of Focus';
+}
+function zoneBg(pct) {
+  if (pct < 25) return '#D1FAE5';
+  if (pct < 50) return '#FEF3C7';
+  return '#FEE2E2';
+}
+function zoneTxt(pct) {
+  if (pct < 25) return '#065F46';
+  if (pct < 50) return '#92400E';
+  return '#991B1B';
+}
+function accColor(pct) {
+  if (pct >= 80) return '#10B981';
+  if (pct >= 60) return '#F59E0B';
+  return '#EF4444';
+}
+
+// ── Domain Bars ───────────────────────────────────────────────────────────────
+const barsContainer = document.getElementById('domain-bars');
+const b1 = baselines[0]; const cur = baselines[2];
+DOMAINS.forEach(d => {
+  const before = b1.domains[d];
+  const after  = cur.domains[d];
+  const diff   = (before - after).toFixed(1);
+  const improved = before > after;
+  const color = DOMAIN_COLORS[d];
+  const zc    = zoneColor(after);
+  const zb    = zoneBg(after);
+  const zt    = zoneTxt(after);
+  const zl    = zoneLabel(after);
+  barsContainer.innerHTML += `
+    <div class="domain-bar-block">
+      <div class="domain-bar-header">
+        <div class="domain-icon" style="background:${color}18">${DOMAIN_ICONS[d]}</div>
+        <div class="domain-name">${d}</div>
+        <div class="zone-pill" style="background:${zb}">
+          <div class="zone-dot" style="background:${zc};width:7px;height:7px;border-radius:50%"></div>
+          <span style="color:${zt};font-size:11px;font-weight:700">${zl}</span>
+        </div>
+        <div class="change-pill ${improved?'improve':'decline'}">
+          ${improved?'↓':'↑'} ${Math.abs(diff)} pts
+        </div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-lbl">Baseline 1</span>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${before}%;background:#EF444470"></div>
+        </div>
+        <span class="bar-pct" style="color:#EF4444">${before.toFixed(1)}%</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-lbl">Current</span>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${after}%;background:${zc}"></div>
+        </div>
+        <span class="bar-pct" style="color:${zc}">${after.toFixed(1)}%</span>
+      </div>
+    </div>`;
+});
+
+// ── Comparison Table ──────────────────────────────────────────────────────────
+const tbody = document.getElementById('comp-table-body');
+DOMAINS.forEach((d, i) => {
+  const first = baselines[0].domains[d];
+  const last  = baselines[2].domains[d];
+  const change = (first - last).toFixed(1);
+  const improved = first > last;
+  tbody.innerHTML += `
+    <tr style="${i%2===1?'background:#F8FAFC':''}">
+      <td><span class="domain-dot-sm" style="background:${DOMAIN_COLORS[d]}"></span>${d}</td>
+      ${baselines.map(b=>`<td><span style="font-weight:700;color:${zoneColor(b.domains[d])}">${b.domains[d].toFixed(1)}%</span></td>`).join('')}
+      <td><span style="font-weight:700;color:${improved?'#10B981':'#EF4444'}">${improved?'↓':'↑'}${Math.abs(change)}</span></td>
+    </tr>`;
+});
+tbody.innerHTML += `
+  <tr class="comp-total">
+    <td>TOTAL</td>
+    ${baselines.map(b=>`<td style="color:${b.total<25?'#34D399':b.total<50?'#FCD34D':'#F87171'}">${b.total.toFixed(1)}%</td>`).join('')}
+    <td style="color:#34D399">↓${(49.4-28.8).toFixed(1)}</td>
+  </tr>`;
+
+// ── Radar Chart ───────────────────────────────────────────────────────────────
+(function() {
+  const svg = document.getElementById('radar');
+  const cx = 150, cy = 150, maxR = 100, N = 6;
+  const rings = [25,50,75,100];
+  const domainLabels = ['Motor','Sensory','Behavior','Comm.','Academic','Health'];
+
+  function angle(i) { return (-Math.PI/2) + (i * 2 * Math.PI / N); }
+  function point(i, val) {
+    // invert: bigger polygon = more improvement (lower symptom % = more inverted radius)
+    const r = ((100 - Math.min(val, 100)) / 100) * maxR;
+    return [cx + r * Math.cos(angle(i)), cy + r * Math.sin(angle(i))];
+  }
+
+  let html = '';
+
+  // Grid rings
+  rings.forEach(pct => {
+    const pts = Array.from({length:N},(_,i) => {
+      const r = (pct/100)*maxR;
+      return `${cx+r*Math.cos(angle(i))},${cy+r*Math.sin(angle(i))}`;
+    }).join(' ');
+    html += `<polygon points="${pts}" fill="none" stroke="#E2E8F0" stroke-width="1"/>`;
+  });
+
+  // Spokes
+  for(let i=0;i<N;i++){
+    const [x,y] = point(i,0); // tip of spoke = 0%
+    // Actually we want the spoke to go to maxR
+    const r = maxR;
+    html += `<line x1="${cx}" y1="${cy}" x2="${cx+r*Math.cos(angle(i))}" y2="${cy+r*Math.sin(angle(i))}" stroke="#E2E8F0" stroke-width="1"/>`;
+  }
+
+  // B1 polygon
+  const b1pts = DOMAINS.map((d,i) => point(i, baselines[0].domains[d]).join(',')).join(' ');
+  html += `<polygon points="${b1pts}" fill="rgba(239,68,68,0.12)" stroke="rgba(239,68,68,0.6)" stroke-width="1.5"/>`;
+
+  // Current polygon
+  const curpts = DOMAINS.map((d,i) => point(i, baselines[2].domains[d]).join(',')).join(' ');
+  html += `<polygon points="${curpts}" fill="rgba(16,185,129,0.22)" stroke="rgba(16,185,129,0.85)" stroke-width="2"/>`;
+
+  // Center
+  html += `<circle cx="${cx}" cy="${cy}" r="3" fill="#94A3B8"/>`;
+
+  // Labels
+  const labelR = maxR + 22;
+  domainLabels.forEach((label, i) => {
+    const a = angle(i);
+    const lx = cx + labelR * Math.cos(a);
+    const ly = cy + labelR * Math.sin(a);
+    html += `<text x="${lx}" y="${ly+4}" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">${label}</text>`;
+  });
+
+  svg.innerHTML = html;
+})();
+
+// ── Trend Chart ───────────────────────────────────────────────────────────────
+(function() {
+  const chartEl = document.getElementById('trend-chart');
+  const maxH = 90;
+  weeklyTrends.forEach(w => {
+    const mH = (w.Motor/100)*maxH;
+    const sH = (w.Sensory/100)*maxH;
+    const aH = (w.Academic/100)*maxH;
+    chartEl.innerHTML += `
+      <div class="trend-bar-group">
+        <div style="display:flex;align-items:flex-end;gap:2px;height:${maxH}px">
+          <div class="trend-bar" style="background:var(--motor);height:${mH}px;width:10px;border-radius:3px 3px 0 0"></div>
+          <div class="trend-bar" style="background:var(--sensory);height:${sH}px;width:10px;border-radius:3px 3px 0 0"></div>
+          <div class="trend-bar" style="background:var(--academic);height:${aH}px;width:10px;border-radius:3px 3px 0 0"></div>
+        </div>
+        <div class="trend-label">${w.week}</div>
+      </div>`;
+  });
+})();
+
+// ── Exercise List ─────────────────────────────────────────────────────────────
+const exList = document.getElementById('exercise-list');
+[...latestExercises].sort((a,b) => b.pct - a.pct).forEach(e => {
+  const c = accColor(e.pct);
+  const dc = DOMAIN_COLORS[e.domain];
+  exList.innerHTML += `
+    <div class="exercise-row">
+      <div class="ex-dot" style="background:${dc}"></div>
+      <div style="flex:1">
+        <div class="ex-name">${e.name} ${e.levelUp ? '⭐' : ''}</div>
+        <div class="ex-meta">${e.correct}/${e.total} correct · Lv.${e.level} · ${e.domain}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="acc-bar-inline">
+          <div class="acc-track"><div class="acc-fill" style="width:${e.pct}%;background:${c}"></div></div>
+          <span class="ex-pct" style="color:${c}">${e.pct.toFixed(0)}%</span>
+        </div>
+        <span class="ex-coins">🪙 ${e.coins}</span>
+      </div>
+    </div>`;
+});
+
+// ── Session Table ─────────────────────────────────────────────────────────────
+const stbody = document.getElementById('session-table-body');
+const maxAvg = Math.max(...sessions.map(s=>s.avg));
+sessions.forEach((s, i) => {
+  const prev = i > 0 ? sessions[i-1].avg : null;
+  const delta = prev !== null ? (s.avg - prev).toFixed(1) : null;
+  const c = accColor(s.avg);
+  stbody.innerHTML += `
+    <tr>
+      <td><strong>Play #${s.play}</strong></td>
+      <td>${s.date}</td>
+      <td>${s.time.toFixed(0)} min</td>
+      <td>${s.turtle}%</td>
+      <td>
+        <div class="acc-bar-inline">
+          <div class="acc-track" style="width:100px">
+            <div class="acc-fill" style="width:${s.avg}%;background:${c}"></div>
+          </div>
+          <span style="font-weight:700;color:${c}">${s.avg}%</span>
+        </div>
+      </td>
+      <td class="coin">${s.coins.toLocaleString()}</td>
+      <td style="font-size:13px;font-weight:700;color:${delta===null?'#94A3B8':Number(delta)>=0?'#10B981':'#EF4444'}">
+        ${delta===null ? '—' : (Number(delta)>=0?'▲':'▼')+Math.abs(Number(delta))}
+      </td>
+    </tr>`;
+});
+
+// ── Improvements Grid ─────────────────────────────────────────────────────────
+const grid = document.getElementById('improvements-grid');
+improvements.forEach(imp => {
+  const listItems = imp.items.map(item =>
+    `<li><span class="check" style="background:${imp.color}">✓</span>${item}</li>`
+  ).join('');
+  grid.innerHTML += `
+    <div class="improvement-card">
+      <div class="improvement-header">
+        <div class="improvement-icon" style="background:${imp.color}18;font-size:22px">${imp.icon}</div>
+        <div class="improvement-title" style="color:${imp.color}">${imp.title}</div>
+      </div>
+      <ul class="improvement-list">${listItems}</ul>
+    </div>`;
+});
+</script>
+</body>
+</html>
