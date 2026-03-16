@@ -7,6 +7,7 @@ import HomeScreen        from '../screens/HomeScreen';
 import ProgressScreen    from '../screens/ProgressScreen';
 import SessionsScreen    from '../screens/SessionsScreen';
 import AssessmentsScreen from '../screens/AssessmentsScreen';
+import ReportScreen      from '../screens/ReportScreen';
 import { colors, typography } from '../utils/theme';
 
 const Tab = createBottomTabNavigator();
@@ -23,10 +24,11 @@ export default function AppNavigator() {
           tabBarLabelStyle: styles.tabLabel,
           tabBarIcon: ({ focused, color }) => {
             const icons: Record<string, [string, string]> = {
-              Home:        ['home',         'home-outline'],
-              Progress:    ['trending-up',  'trending-up-outline'],
+              Home:        ['home',            'home-outline'],
+              Progress:    ['trending-up',     'trending-up-outline'],
               Sessions:    ['game-controller', 'game-controller-outline'],
-              Assessments: ['clipboard',    'clipboard-outline'],
+              Assessments: ['clipboard',       'clipboard-outline'],
+              Report:      ['document-text',   'document-text-outline'],
             };
             const [active, inactive] = icons[route.name] ?? ['ellipse', 'ellipse-outline'];
             return <Ionicons name={(focused ? active : inactive) as any} size={22} color={color} />;
@@ -37,6 +39,7 @@ export default function AppNavigator() {
         <Tab.Screen name="Progress"    component={ProgressScreen}    options={{ tabBarLabel: 'Progress' }} />
         <Tab.Screen name="Sessions"    component={SessionsScreen}    options={{ tabBarLabel: 'Sessions' }} />
         <Tab.Screen name="Assessments" component={AssessmentsScreen} options={{ tabBarLabel: 'Assessments' }} />
+        <Tab.Screen name="Report"      component={ReportScreen}      options={{ tabBarLabel: 'Report' }} />
       </Tab.Navigator>
     </NavigationContainer>
   );
