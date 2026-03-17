@@ -1,4 +1,4 @@
-import { Domain, PerformanceZone } from '../types';
+import { Domain, PerformanceZone, ROIInputs, ROIResults } from '../types';
 
 // ── Domain metadata ──────────────────────────────────────────────────────────
 
@@ -94,3 +94,23 @@ export const calcImprovement = (before: number, after: number): number => {
 
 export const calcPointChange = (before: number, after: number): number =>
   Math.round((before - after) * 10) / 10;
+
+// ── ROI calculation ───────────────────────────────────────────────────────────
+
+export const calcROI = (inputs: ROIInputs): ROIResults => {
+  const { memberCount, programCostPerMember, therapyLines } = inputs;
+  const lineBreakdown = therapyLines.map(line => {
+    const savings =
+      memberCount *
+      (line.utilizationPct / 100) *
+      line.annualCostPerUser *
+      (line.reductionPct / 100);
+    return { key: line.key, label: line.label, savings, color: line.color };
+  });
+  const totalSavings = lineBreakdown.reduce((sum, l) => sum + l.savings, 0);
+  const programCost = memberCount * programCostPerMember;
+  const netSavings = totalSavings - programCost;
+  const roiMultiple = programCost > 0 ? totalSavings / programCost : 0;
+  const perMemberSavings = memberCount > 0 ? netSavings / memberCount : 0;
+  return { totalSavings, programCost, netSavings, roiMultiple, perMemberSavings, lineBreakdown };
+};

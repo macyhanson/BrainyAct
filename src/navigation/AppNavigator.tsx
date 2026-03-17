@@ -7,7 +7,8 @@ import HomeScreen        from '../screens/HomeScreen';
 import ProgressScreen    from '../screens/ProgressScreen';
 import SessionsScreen    from '../screens/SessionsScreen';
 import AssessmentsScreen from '../screens/AssessmentsScreen';
-import ReportScreen      from '../screens/ReportScreen';
+import ReportScreen         from '../screens/ReportScreen';
+import ROICalculatorScreen from '../screens/ROICalculatorScreen';
 import { colors, typography } from '../utils/theme';
 
 const Tab = createBottomTabNavigator();
@@ -29,6 +30,7 @@ export default function AppNavigator() {
               Sessions:    ['game-controller', 'game-controller-outline'],
               Assessments: ['clipboard',       'clipboard-outline'],
               Report:      ['document-text',   'document-text-outline'],
+              ROI:         ['calculator',      'calculator-outline'],
             };
             const [active, inactive] = icons[route.name] ?? ['ellipse', 'ellipse-outline'];
             return <Ionicons name={(focused ? active : inactive) as any} size={22} color={color} />;
@@ -39,7 +41,8 @@ export default function AppNavigator() {
         <Tab.Screen name="Progress"    component={ProgressScreen}    options={{ tabBarLabel: 'Progress' }} />
         <Tab.Screen name="Sessions"    component={SessionsScreen}    options={{ tabBarLabel: 'Sessions' }} />
         <Tab.Screen name="Assessments" component={AssessmentsScreen} options={{ tabBarLabel: 'Assessments' }} />
-        <Tab.Screen name="Report"      component={ReportScreen}      options={{ tabBarLabel: 'Report' }} />
+        <Tab.Screen name="Report"      component={ReportScreen}         options={{ tabBarLabel: 'Report' }} />
+        <Tab.Screen name="ROI"         component={ROICalculatorScreen}  options={{ tabBarLabel: 'ROI' }} />
       </Tab.Navigator>
     </NavigationContainer>
   );
