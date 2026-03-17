@@ -92,6 +92,33 @@ export interface RealLifeImprovement {
   improvements: string[];
 }
 
+// ── ROI Calculator types ─────────────────────────────────────────────────────
+
+export interface ROITherapyLine {
+  key: string;
+  label: string;
+  icon: string;
+  color: string;
+  utilizationPct: number;    // % of members currently using (0–100)
+  annualCostPerUser: number; // avg annual cost per member using (USD)
+  reductionPct: number;      // expected % reduction from BrainyAct (0–100)
+}
+
+export interface ROIInputs {
+  memberCount: number;
+  programCostPerMember: number;
+  therapyLines: ROITherapyLine[];
+}
+
+export interface ROIResults {
+  totalSavings: number;
+  programCost: number;
+  netSavings: number;
+  roiMultiple: number;
+  perMemberSavings: number;
+  lineBreakdown: { key: string; label: string; savings: number; color: string }[];
+}
+
 // ── Legacy types (kept for backward compat with old components) ─────────────
 
 export interface ReportMetric {
