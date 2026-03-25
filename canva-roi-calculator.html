@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrainyAct ROI Calculator Embed</title>
+  <style>
+    html, body { margin:0; padding:0; font-family: Inter, Arial, sans-serif; background:#f4f7fc; color:#1e2a3e; }
+    .wrap { max-width: 1400px; margin: 0 auto; padding: 12px; }
+    .head { background:#123a69; color:#fff; border-radius:12px; padding:12px 16px; margin-bottom:10px; }
+    .head h1 { margin:0; font-size:24px; }
+    .head p { margin:4px 0 0; color:#c8d7ef; font-size:13px; }
+    .grid { display:grid; grid-template-columns: 330px 1fr; gap:10px; }
+    .card { background:#fff; border:1px solid #d8e2f1; border-radius:12px; padding:10px; }
+    .title { font-size:11px; letter-spacing:.7px; font-weight:800; text-transform:uppercase; color:#5a7399; margin:0 0 8px; }
+    .field { margin-bottom:8px; }
+    label { display:block; font-size:12px; color:#607391; margin-bottom:4px; font-weight:600; }
+    input, select, button { width:100%; padding:8px; border-radius:8px; border:1px solid #ccd8ea; font-size:13px; }
+    button { border:none; font-weight:700; cursor:pointer; }
+    .btn { background:#2f73f1; color:#fff; margin-bottom:6px; }
+    .btn2 { background:#edf3ff; color:#214395; margin-bottom:6px; }
+    .ribbon { background:#fffaf0; border:1px solid #edcf83; color:#7b5513; border-radius:10px; padding:8px 10px; font-size:12px; margin-bottom:10px; }
+    .top2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+    .prog h3 { margin:0 0 6px; font-size:18px; }
+    .prog .k { display:flex; justify-content:space-between; font-size:13px; border-bottom:1px solid #edf2fa; padding:6px 0; }
+    .prog .big { font-size:30px; font-weight:900; color:#0ea04b; margin-top:8px; }
+    table { width:100%; border-collapse:separate; border-spacing:0; font-size:12px; border:1px solid #dfe7f5; border-radius:10px; overflow:hidden; }
+    th, td { padding:7px; border-bottom:1px solid #edf2fa; text-align:right; }
+    th:first-child, td:first-child { text-align:left; }
+    th { background:#f3f7ff; font-size:11px; text-transform:uppercase; color:#526789; }
+    tbody tr:nth-child(even){background:#f8fbff}
+    .charts { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+    .legend { margin-top:10px; background:#fff; border:1px solid #d8e2f1; border-radius:10px; padding:8px; font-size:11px; color:#607391; }
+    .green{color:#0ea04b;font-weight:700}.red{color:#d63b3b;font-weight:700}
+    @media (max-width: 1100px){ .grid{grid-template-columns:1fr;} .top2,.charts{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>BrainyAct ROI Calculator</h1>
+    <p>Canva embed edition · Interactive ROI comparison</p>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h4 class="title">Inputs</h4>
+      <div class="field"><label>Members added each year</label><input id="annualNewMembers" type="number" value="1000"></div>
+      <div class="field"><label>Projection years</label><input id="years" type="number" value="5"></div>
+      <div class="field"><label>Annual churn %</label><input id="churnRateAnnual" type="number" value="12"></div>
+      <div class="field"><label>Severity mode</label>
+        <select id="selectedLevel">
+          <option value="mixed" selected>Mixed</option><option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3</option>
+        </select>
+      </div>
+      <div class="field"><label>Mix L1 / L2 / L3 (%)</label><input id="mixL1" type="number" value="50"><input id="mixL2" type="number" value="35"><input id="mixL3" type="number" value="15"></div>
+      <div class="field"><label>ABA annual cost L1/L2/L3</label><input id="abaAnnualCostL1" type="number" value="36000"><input id="abaAnnualCostL2" type="number" value="65000"><input id="abaAnnualCostL3" type="number" value="112000"></div>
+      <div class="field"><label>ABA avg duration (years)</label><input id="abaDurationYears" type="number" value="3.5"></div>
+      <div class="field"><label>BrainyAct monthly cost L1/L2/L3</label><input id="brainyMonthlyCostL1" type="number" value="1200"><input id="brainyMonthlyCostL2" type="number" value="1500"><input id="brainyMonthlyCostL3" type="number" value="1800"></div>
+      <div class="field"><label>BrainyAct avg duration (months)</label><input id="brainyDurationMonths" type="number" value="6"></div>
+      <div class="field"><label>Continue to ABA % (Y1..Y5)</label><input id="contY1" type="number" value="20"><input id="contY2" type="number" value="15"><input id="contY3" type="number" value="10"><input id="contY4" type="number" value="8"><input id="contY5" type="number" value="5"></div>
+      <div class="field"><label>Continuation duration years</label><input id="continuationDurationYears" type="number" value="2"></div>
+      <div class="field"><label>Continuation cost factor</label><input id="continuationCostFactor" type="number" value="1"></div>
+      <button class="btn" id="recalcBtn">Recalculate</button>
+      <button class="btn2" id="downloadCsvBtn">Download CSV</button>
+      <button class="btn2" id="saveScenarioBtn">Save Scenario</button>
+      <button class="btn2" id="loadScenarioBtn">Load Scenario</button>
+    </div>
+
+    <div>
+      <div class="ribbon" id="assumptionRibbon">Active assumptions will appear here.</div>
+      <div class="top2">
+        <div class="card prog">
+          <h3>Program A — Behavioral Care</h3>
+          <div class="k"><span>1-Year Total</span><b id="a1">$0</b></div>
+          <div class="k"><span>5-Year Total</span><b id="a5">$0</b></div>
+          <div class="k"><span>5-Year Net (A-B)</span><b id="netA">$0</b></div>
+          <div class="big" id="roiA">—</div>
+        </div>
+        <div class="card prog">
+          <h3>Program B — BrainyAct</h3>
+          <div class="k"><span>1-Year Total</span><b id="b1">$0</b></div>
+          <div class="k"><span>5-Year Total</span><b id="b5">$0</b></div>
+          <div class="k"><span>ROI Return per $1</span><b id="roiB">$0.00</b></div>
+          <div class="big" id="beB">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <table id="resultsTable">
+          <thead>
+            <tr><th>Year</th><th>New</th><th>ABA Active</th><th>ABA Cost</th><th>Brainy Episode</th><th>Continuation</th><th>B Total</th><th>Net</th><th>Cumulative</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="charts">
+        <div class="card"><canvas id="costTrendChart" height="180"></canvas></div>
+        <div class="card"><canvas id="netTrendChart" height="180"></canvas></div>
+      </div>
+
+      <div class="legend">
+        <b>Assumptions legend:</b> Cohort-based model; annual intake each year; Program A costs stack until duration ends; Program B is time-limited episode + optional step-down ABA continuation; Net = A-B.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const $=id=>document.getElementById(id); const key="brainyact_embed_scn";
+let costChart,netChart,rowsCache=[],summary={};
+
+const num=id=>{const v=parseFloat($(id).value); return Number.isFinite(v)?v:0;};
+const money=n=>n.toLocaleString(undefined,{style:"currency",currency:"USD",maximumFractionDigits:0});
+const pct=v=>v/100;
+
+function weights(){
+  const m=$("selectedLevel").value;
+  if(m==="1") return {l1:1,l2:0,l3:0};
+  if(m==="2") return {l1:0,l2:1,l3:0};
+  if(m==="3") return {l1:0,l2:0,l3:1};
+  const l1=num("mixL1"), l2=num("mixL2"), l3=num("mixL3"), s=l1+l2+l3||1;
+  return {l1:l1/s,l2:l2/s,l3:l3/s};
+}
+function calc(){
+  const years=Math.max(1,Math.round(num("years")));
+  const annual=Math.max(0,num("annualNewMembers"));
+  const churn=Math.max(0,Math.min(1,pct(num("churnRateAnnual"))));
+  const {l1,l2,l3}=weights();
+
+  const abaAnnual=l1*num("abaAnnualCostL1")+l2*num("abaAnnualCostL2")+l3*num("abaAnnualCostL3");
+  const abaLife=Math.ceil(Math.max(.1,num("abaDurationYears")));
+
+  const brainyMonthly=l1*num("brainyMonthlyCostL1")+l2*num("brainyMonthlyCostL2")+l3*num("brainyMonthlyCostL3");
+  const brainyEpisode=brainyMonthly*Math.max(1,num("brainyDurationMonths"));
+
+  const cont=[num("contY1"),num("contY2"),num("contY3"),num("contY4"),num("contY5")].map(v=>Math.max(0,Math.min(1,pct(v))));
+  const contLife=Math.ceil(Math.max(.1,num("continuationDurationYears")));
+  const contFactor=Math.max(0,num("continuationCostFactor"));
+
+  const rows=[],abaC=[],contC=[]; let cum=0;
+  for(let y=1;y<=years;y++){
+    const newM=annual*Math.pow(1-churn,y-1);
+    abaC.push({s:y,u:newM});
+    let active=0; abaC.forEach(c=>{if(y-c.s<abaLife)active+=c.u;});
+    const abaCost=active*abaAnnual;
+    const episode=newM*brainyEpisode;
+
+    const cr=cont[Math.min(y-1,cont.length-1)]||0;
+    contC.push({s:y,u:newM*cr});
+    let cAct=0; contC.forEach(c=>{if(y-c.s<contLife)cAct+=c.u;});
+    const cCost=cAct*abaAnnual*contFactor;
+
+    const bTot=episode+cCost;
+    const net=abaCost-bTot; cum+=net;
+    rows.push({y,newM,active,abaCost,episode,cCost,bTot,net,cum});
+  }
+
+  const y1=rows[0]||{abaCost:0,bTot:0};
+  const a1=y1.abaCost,b1=y1.bTot,a5=rows.reduce((s,r)=>s+r.abaCost,0),b5=rows.reduce((s,r)=>s+r.bTot,0);
+  const net5=a5-b5, roi=b5>0?net5/b5:0, be=rows.find(r=>r.cum>=0);
+
+  $("assumptionRibbon").innerHTML=`<b>Active assumptions:</b> ${Math.round(annual).toLocaleString()} members · Severity ${(l1*100).toFixed(1)} / ${(l2*100).toFixed(1)} / ${(l3*100).toFixed(1)} · ABA ${money(abaAnnual)}/yr · BrainyAct ${money(brainyMonthly)}/mo`;
+  $("a1").textContent=money(a1); $("b1").textContent=money(b1); $("a5").textContent=money(a5); $("b5").textContent=money(b5);
+  $("netA").textContent=money(net5); $("netA").className=net5>=0?"green":"red";
+  $("roiA").textContent=`${(roi*100).toFixed(1)}% ROI`;
+  $("roiB").textContent=`$${roi.toFixed(2)} per $1`;
+  $("beB").textContent=be?`Break-even ${be.y}`:"No break-even";
+
+  const tb=$("resultsTable").querySelector("tbody"); tb.innerHTML="";
+  rows.forEach(r=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${r.y}</td><td>${Math.round(r.newM).toLocaleString()}</td><td>${Math.round(r.active).toLocaleString()}</td><td>${money(r.abaCost)}</td><td>${money(r.episode)}</td><td>${money(r.cCost)}</td><td>${money(r.bTot)}</td><td class="${r.net>=0?'green':'red'}">${money(r.net)}</td><td class="${r.cum>=0?'green':'red'}">${money(r.cum)}</td>`;
+    tb.appendChild(tr);
+  });
+
+  renderCharts(rows);
+  rowsCache=rows; summary={a1,b1,a5,b5,net5,roi};
+}
+function renderCharts(rows){
+  const labels=rows.map(r=>`Y${r.y}`), a=rows.map(r=>r.abaCost), b=rows.map(r=>r.bTot), c=rows.map(r=>r.cum);
+  if(costChart)costChart.destroy(); if(netChart)netChart.destroy();
+  costChart=new Chart($("costTrendChart"),{type:"line",data:{labels,datasets:[
+    {label:"Program A",data:a,borderColor:"#2f73f1",tension:.25,fill:false},
+    {label:"Program B",data:b,borderColor:"#7b47ff",tension:.25,fill:false}
+  ]},options:{plugins:{legend:{position:"bottom"}}}});
+  netChart=new Chart($("netTrendChart"),{type:"line",data:{labels,datasets:[
+    {label:"Cumulative Net",data:c,borderColor:"#0ea04b",backgroundColor:"rgba(14,160,75,.12)",fill:true,tension:.25}
+  ]},options:{plugins:{legend:{position:"bottom"}}}});
+}
+function csv(){
+  if(!rowsCache.length)calc();
+  let out="BrainyAct ROI Embed\nGenerated,"+new Date().toISOString()+"\n\n";
+  out+="Metric,Value\nProgram A 1-Year,"+summary.a1+"\nProgram B 1-Year,"+summary.b1+"\nProgram A 5-Year,"+summary.a5+"\nProgram B 5-Year,"+summary.b5+"\n5-Year Net,"+summary.net5+"\nROI,"+summary.roi+"\n\n";
+  out+="Year,New,ABA Active,ABA Cost,Brainy Episode,Continuation,B Total,Net,Cumulative\n";
+  rowsCache.forEach(r=>{out+=[r.y,r.newM,r.active,r.abaCost,r.episode,r.cCost,r.bTot,r.net,r.cum].join(",")+"\n";});
+  const blob=new Blob([out],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob); const a=document.createElement("a");
+  a.href=url; a.download="brainyact_canva_embed.csv"; a.click(); URL.revokeObjectURL(url);
+}
+function save(){ const ids=[...document.querySelectorAll("input,select")].map(x=>x.id); const o={}; ids.forEach(id=>o[id]=$(id).value); localStorage.setItem(key,JSON.stringify(o)); alert("Scenario saved."); }
+function load(){ const raw=localStorage.getItem(key); if(!raw)return alert("No saved scenario."); const o=JSON.parse(raw); Object.keys(o).forEach(k=>{if($(k))$(k).value=o[k];}); calc(); alert("Scenario loaded."); }
+
+document.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",calc));
+$("recalcBtn").addEventListener("click",calc);
+$("downloadCsvBtn").addEventListener("click",csv);
+$("saveScenarioBtn").addEventListener("click",save);
+$("loadScenarioBtn").addEventListener("click",load);
+calc();
+</script>
+</body>
+</html>
