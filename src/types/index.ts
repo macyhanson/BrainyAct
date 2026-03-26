@@ -94,6 +94,8 @@ export interface RealLifeImprovement {
 
 // ── ROI Calculator types ─────────────────────────────────────────────────────
 
+export type AutismLevel = 1 | 2 | 3;
+
 export interface TherapyLine {
   key: string;
   label: string;
@@ -113,7 +115,7 @@ export interface ProgramBInputs {
   pmpm: number;               // BrainyAct cost per member per month
   avgDurationMonths: number;  // how long members are in BrainyAct
   churnRatePct: number;       // shown separately
-  continuationPct: [number, number, number]; // % still using ABA: [yr1, yr2, yr3] post-BrainyAct
+  continuationPct: [number, number, number, number, number]; // % still using ABA: [yr1–yr5] post-BrainyAct
   therapyLines: TherapyLine[]; // reductionPct applied to continuation cost
 }
 

@@ -1,4 +1,4 @@
-import { Domain, PerformanceZone, ProgramAInputs, ProgramBInputs, FiveYearModel, YearResult } from '../types';
+import { Domain, PerformanceZone, ProgramAInputs, ProgramBInputs, FiveYearModel, YearResult, AutismLevel } from '../types';
 
 // ── Domain metadata ──────────────────────────────────────────────────────────
 
@@ -137,7 +137,7 @@ export const calcFiveYearModel = (
     // Program B: BrainyAct cost for this year's new cohort
     // + ABA continuation from the past 3 cohorts at decreasing rates
     let costB = brainyActCostPerCohort;
-    for (let post = 1; post <= 3; post++) {
+    for (let post = 1; post <= 5; post++) {
       const cohortYear = y - post;
       if (cohortYear >= 1) {
         const pct = programB.continuationPct[post - 1] / 100;
@@ -157,4 +157,20 @@ export const calcFiveYearModel = (
   const returnPerDollar = programBCost5yr > 0 ? netSavings5yr / programBCost5yr : 0;
 
   return { yearlyResults: results, programACost5yr, programBCost5yr, netSavings5yr, roiMultiple, returnPerDollar };
+};
+
+// ── Autism level defaults ─────────────────────────────────────────────────────
+
+export interface AutismLevelDefaults {
+  abaAnnualCost: number;
+  reductionPct: number;
+  continuationPct: [number, number, number, number, number];
+}
+
+export const getAutismLevelDefaults = (level: AutismLevel): AutismLevelDefaults => {
+  switch (level) {
+    case 1: return { abaAnnualCost: 36_000, reductionPct: 35, continuationPct: [50, 25, 10, 5, 2] };
+    case 2: return { abaAnnualCost: 48_000, reductionPct: 25, continuationPct: [80, 40, 20, 10, 5] };
+    case 3: return { abaAnnualCost: 72_000, reductionPct: 15, continuationPct: [90, 65, 35, 20, 10] };
+  }
 };
