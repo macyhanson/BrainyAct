@@ -7,9 +7,12 @@ import { Ionicons } from '@expo/vector-icons';
 import ExerciseRow from '../components/ExerciseRow';
 import TrendBarChart from '../components/TrendBarChart';
 import { sessions, weeklyTrends, childProfile } from '../data/mockData';
-import { getDomainColor, DOMAINS, formatDate, formatNumber } from '../utils/helpers';
+import { seedVariants } from '../data/seedVariants';
+import { getDomainColor, formatDate, formatNumber } from '../utils/helpers';
 import { colors, spacing, typography, borderRadius, shadows } from '../utils/theme';
 import { Session, Domain } from '../types';
+import { createInitialAdaptiveProfile, recommendVariant, updateAdaptiveProfile } from '../utils/adaptiveEngine';
+import { ExerciseCategory, ExerciseResult } from '../types/adaptive';
 
 type ViewMode = 'sessions' | 'trends';
 
@@ -23,6 +26,41 @@ export default function SessionsScreen() {
     : selectedSession.exercises.filter(e => e.domain === domainFilter);
 
   const domainsInSession = Array.from(new Set(selectedSession.exercises.map(e => e.domain)));
+  const categoryMap: Record<Domain, ExerciseCategory> = {
+    Motor: 'coordination',
+    Sensory: 'balance',
+    Behavior: 'calm',
+    Communication: 'bilateral',
+    Academic: 'strength',
+    Health: 'strength',
+  };
+
+  const adaptiveResults: ExerciseResult[] = selectedSession.exercises.map((exercise) => ({
+    missionId: `session-${selectedSession.id}`,
+    childId: childProfile.id,
+    date: selectedSession.date,
+    exerciseId: exercise.name,
+    category: categoryMap[exercise.domain],
+    levelPlayed: (Math.max(1, Math.min(3, exercise.level)) as 1 | 2 | 3),
+    completed: exercise.percentCorrect >= 60,
+    skipped: exercise.percentCorrect < 30,
+    tooHardTapped: exercise.percentCorrect < 50,
+    doAgainTapped: exercise.percentCorrect >= 90,
+    attempts: exercise.percentCorrect >= 80 ? 1 : exercise.percentCorrect >= 50 ? 2 : 3,
+    durationSecActual: Math.max(20, Math.round((exercise.levelUpGoal / Math.max(1, exercise.levelUpFreq)) * 6)),
+  }));
+
+  const adaptiveProfile = updateAdaptiveProfile(
+    createInitialAdaptiveProfile(childProfile.id),
+    adaptiveResults,
+    seedVariants
+  );
+
+  const recommendedByCategory = (Object.keys(adaptiveProfile.categories) as ExerciseCategory[]).map((category) => {
+    const categoryState = adaptiveProfile.categories[category];
+    const recommendation = recommendVariant(seedVariants, category, categoryState.currentLevel);
+    return { category, state: categoryState, recommendation };
+  });
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -135,6 +173,29 @@ export default function SessionsScreen() {
             </View>
           </View>
 
+          <View style={[styles.adaptiveCard, shadows.sm]}>
+            <Text style={styles.cardTitle}>Adaptive Difficulty Suggestions</Text>
+            <Text style={styles.cardSub}>
+              Recommendations auto-adjust based on completion, retries, and “too hard” signals.
+            </Text>
+            {recommendedByCategory.map(({ category, state, recommendation }) => (
+              <View key={category} style={styles.adaptiveRow}>
+                <View style={styles.adaptiveLeft}>
+                  <Text style={styles.adaptiveCategory}>{category}</Text>
+                  <Text style={styles.adaptiveMeta}>
+                    Success {(state.rollingSuccessRate * 100).toFixed(0)}% · Confidence {(state.confidence * 100).toFixed(0)}%
+                  </Text>
+                </View>
+                <View style={styles.adaptiveRight}>
+                  <Text style={styles.adaptiveLevel}>L{state.currentLevel}</Text>
+                  <Text style={styles.adaptiveTitle} numberOfLines={1}>
+                    {recommendation?.title ?? 'No variant'}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+
           {/* Domain filter pills */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.domainPills}>
             {(['All', ...domainsInSession] as (Domain | 'All')[]).map(d => {
@@ -226,6 +287,21 @@ const styles = StyleSheet.create({
   overviewItem: { flex: 1, alignItems: 'center', gap: 3 },
   overviewVal: { ...typography.h4, color: colors.text },
   overviewLabel: { ...typography.caption, color: colors.textMuted },
+  adaptiveCard: {
+    backgroundColor: colors.surface, marginHorizontal: spacing.md,
+    borderRadius: borderRadius.md, marginBottom: spacing.sm, marginTop: spacing.sm,
+    padding: spacing.md, borderWidth: 1, borderColor: colors.borderLight,
+  },
+  adaptiveRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: 8, borderTopWidth: 1, borderTopColor: colors.borderLight,
+  },
+  adaptiveLeft: { flex: 1, paddingRight: 10 },
+  adaptiveRight: { width: 130, alignItems: 'flex-end' },
+  adaptiveCategory: { ...typography.body, color: colors.text, fontWeight: '700', textTransform: 'capitalize' },
+  adaptiveMeta: { ...typography.caption, color: colors.textMuted, marginTop: 2 },
+  adaptiveLevel: { ...typography.bodySmall, color: colors.primary, fontWeight: '800' },
+  adaptiveTitle: { ...typography.caption, color: colors.textSecondary, marginTop: 2, maxWidth: 130, textAlign: 'right' },
   domainPills: {
     paddingHorizontal: spacing.md, gap: 8, paddingBottom: 10,
   },

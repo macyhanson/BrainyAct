@@ -183,3 +183,5 @@ export interface UserProfile {
   department: string;
   avatar?: string;
 }
+
+export * from './adaptive';
