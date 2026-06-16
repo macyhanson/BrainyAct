@@ -1,4 +1,4 @@
-import { Domain, PerformanceZone, ROIInputs, ROIResults } from '../types';
+import { Domain, PerformanceZone, ProgramAInputs, ProgramBInputs, FiveYearModel, YearResult } from '../types';
 
 // ── Domain metadata ──────────────────────────────────────────────────────────
 
@@ -95,22 +95,66 @@ export const calcImprovement = (before: number, after: number): number => {
 export const calcPointChange = (before: number, after: number): number =>
   Math.round((before - after) * 10) / 10;
 
-// ── ROI calculation ───────────────────────────────────────────────────────────
+// ── ROI 5-year model ──────────────────────────────────────────────────────────
+//
+// Program A (Behavioral Care): new cohort of N members enrolled every year,
+// each cohort stays for avgDurationYears. Costs stack year over year until
+// cohorts start aging out.
+//
+// Program B (BrainyAct): new cohort enrolled every year, completes care in
+// avgDurationMonths. After graduation, a shrinking % continue to ABA therapy
+// at step-down (reduced) utilization rates for up to 3 years.
 
-export const calcROI = (inputs: ROIInputs): ROIResults => {
-  const { memberCount, programCostPerMember, therapyLines } = inputs;
-  const lineBreakdown = therapyLines.map(line => {
-    const savings =
-      memberCount *
-      (line.utilizationPct / 100) *
-      line.annualCostPerUser *
-      (line.reductionPct / 100);
-    return { key: line.key, label: line.label, savings, color: line.color };
-  });
-  const totalSavings = lineBreakdown.reduce((sum, l) => sum + l.savings, 0);
-  const programCost = memberCount * programCostPerMember;
-  const netSavings = totalSavings - programCost;
-  const roiMultiple = programCost > 0 ? totalSavings / programCost : 0;
-  const perMemberSavings = memberCount > 0 ? netSavings / memberCount : 0;
-  return { totalSavings, programCost, netSavings, roiMultiple, perMemberSavings, lineBreakdown };
+export const calcFiveYearModel = (
+  membersPerYear: number,
+  programA: ProgramAInputs,
+  programB: ProgramBInputs,
+): FiveYearModel => {
+  // Per-member-per-year therapy cost for Program A (no reduction)
+  const costPerMemberA = programA.therapyLines.reduce(
+    (sum, l) => sum + (l.utilizationPct / 100) * l.annualCostPerUser, 0,
+  );
+
+  // Per-member-per-year continuation cost for Program B (reduction applied)
+  const costPerMemberBCont = programB.therapyLines.reduce(
+    (sum, l) => sum + (l.utilizationPct / 100) * l.annualCostPerUser * (1 - l.reductionPct / 100), 0,
+  );
+
+  // BrainyAct cost for one cohort for the duration of care
+  const brainyActCostPerCohort = membersPerYear * programB.pmpm * programB.avgDurationMonths;
+
+  // Number of years a Program A cohort is active (round to nearest integer)
+  const dur = Math.max(1, Math.round(programA.avgDurationYears));
+
+  const results: YearResult[] = [];
+  let cumNet = 0;
+
+  for (let y = 1; y <= 5; y++) {
+    // Program A: cohorts stack up to dur, then plateau as old cohorts age out
+    const activeCohorts = Math.min(y, dur);
+    const costA = activeCohorts * membersPerYear * costPerMemberA;
+
+    // Program B: BrainyAct cost for this year's new cohort
+    // + ABA continuation from the past 3 cohorts at decreasing rates
+    let costB = brainyActCostPerCohort;
+    for (let post = 1; post <= 3; post++) {
+      const cohortYear = y - post;
+      if (cohortYear >= 1) {
+        const pct = programB.continuationPct[post - 1] / 100;
+        costB += membersPerYear * pct * costPerMemberBCont;
+      }
+    }
+
+    const net = costA - costB;
+    cumNet += net;
+    results.push({ year: y, activeCohorts, costA, costB, netSavings: net, cumulativeNet: cumNet });
+  }
+
+  const programACost5yr = results.reduce((s, r) => s + r.costA, 0);
+  const programBCost5yr = results.reduce((s, r) => s + r.costB, 0);
+  const netSavings5yr = programACost5yr - programBCost5yr;
+  const roiMultiple = programBCost5yr > 0 ? programACost5yr / programBCost5yr : 0;
+  const returnPerDollar = programBCost5yr > 0 ? netSavings5yr / programBCost5yr : 0;
+
+  return { yearlyResults: results, programACost5yr, programBCost5yr, netSavings5yr, roiMultiple, returnPerDollar };
 };

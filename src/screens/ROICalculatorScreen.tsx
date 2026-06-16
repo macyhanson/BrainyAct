@@ -1,57 +1,80 @@
 import React, { useState, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, StatusBar, TextInput, KeyboardAvoidingView, Platform,
+  View, Text, StyleSheet, ScrollView, StatusBar, TextInput,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { ROITherapyLine } from '../types';
-import { calcROI } from '../utils/helpers';
+import { TherapyLine } from '../types';
+import { calcFiveYearModel } from '../utils/helpers';
 import { colors, spacing, typography, borderRadius, shadows } from '../utils/theme';
 
 // ── Default therapy data ──────────────────────────────────────────────────────
 
-const DEFAULT_THERAPY_LINES: ROITherapyLine[] = [
-  { key: 'aba',       label: 'ABA Therapy',       icon: 'people',      color: '#6366F1', utilizationPct: 12, annualCostPerUser: 48000, reductionPct: 25 },
-  { key: 'ot',        label: 'OT Therapy',         icon: 'hand-left',   color: '#3B82F6', utilizationPct: 22, annualCostPerUser: 3200,  reductionPct: 20 },
-  { key: 'speech',    label: 'Speech Therapy',     icon: 'chatbubbles', color: '#10B981', utilizationPct: 25, annualCostPerUser: 4100,  reductionPct: 20 },
-  { key: 'pt',        label: 'Physical Therapy',   icon: 'body',        color: '#F59E0B', utilizationPct: 11, annualCostPerUser: 2600,  reductionPct: 15 },
-  { key: 'cognitive', label: 'Cognitive Therapy',  icon: 'brain',       color: '#8B5CF6', utilizationPct: 14, annualCostPerUser: 5500,  reductionPct: 25 },
-  { key: 'crisis',    label: 'Crisis / ER Visits', icon: 'medical',     color: '#EF4444', utilizationPct: 6,  annualCostPerUser: 9000,  reductionPct: 35 },
+const DEFAULT_LINES: TherapyLine[] = [
+  { key: 'aba',       label: 'ABA Therapy',      color: '#6366F1', utilizationPct: 12, annualCostPerUser: 48000, reductionPct: 25 },
+  { key: 'ot',        label: 'OT Therapy',        color: '#3B82F6', utilizationPct: 22, annualCostPerUser: 3200,  reductionPct: 20 },
+  { key: 'speech',    label: 'Speech Therapy',    color: '#10B981', utilizationPct: 25, annualCostPerUser: 4100,  reductionPct: 20 },
+  { key: 'pt',        label: 'Physical Therapy',  color: '#F59E0B', utilizationPct: 11, annualCostPerUser: 2600,  reductionPct: 15 },
+  { key: 'cognitive', label: 'Cognitive Therapy', color: '#8B5CF6', utilizationPct: 14, annualCostPerUser: 5500,  reductionPct: 25 },
+  { key: 'crisis',    label: 'Crisis / ER',       color: '#EF4444', utilizationPct: 6,  annualCostPerUser: 9000,  reductionPct: 35 },
 ];
 
-// ── Formatting helpers ────────────────────────────────────────────────────────
+// ── Formatting ────────────────────────────────────────────────────────────────
 
-const fmtDollars = (n: number): string => {
+const fmt = (n: number): string => {
   const abs = Math.abs(n);
-  if (abs >= 1_000_000) return `${n < 0 ? '-' : ''}$${(abs / 1_000_000).toFixed(1)}M`;
-  if (abs >= 1_000)     return `${n < 0 ? '-' : ''}$${(abs / 1_000).toFixed(0)}K`;
-  return `${n < 0 ? '-$' : '$'}${abs.toFixed(0)}`;
+  const sign = n < 0 ? '-' : '';
+  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000)     return `${sign}$${(abs / 1_000).toFixed(0)}K`;
+  return `${sign}$${abs.toFixed(0)}`;
 };
-
-const fmtDollarsShort = (n: number): string => fmtDollars(n);
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function ROICalculatorScreen() {
-  const [memberCount, setMemberCount] = useState('500');
-  const [programCost, setProgramCost] = useState('1200');
-  const [lines, setLines] = useState<ROITherapyLine[]>(DEFAULT_THERAPY_LINES);
+  // Shared
+  const [membersPerYear, setMembersPerYear] = useState('500');
 
-  const updateLine = (key: string, field: keyof ROITherapyLine, raw: string) => {
-    setLines(prev => prev.map(l => {
-      if (l.key !== key) return l;
-      const num = parseFloat(raw);
-      return { ...l, [field]: isNaN(num) ? 0 : num };
-    }));
-  };
+  // Program A — Behavioral Care
+  const [durationYears, setDurationYears]   = useState('3.5');
+  const [churnA, setChurnA]                 = useState('12');
+  const [linesA, setLinesA]                 = useState<TherapyLine[]>(DEFAULT_LINES);
 
-  const results = useMemo(() => calcROI({
-    memberCount: parseFloat(memberCount) || 0,
-    programCostPerMember: parseFloat(programCost) || 0,
-    therapyLines: lines,
-  }), [memberCount, programCost, lines]);
+  // Program B — BrainyAct
+  const [pmpm, setPmpm]                         = useState('100');
+  const [durationMonths, setDurationMonths]     = useState('6');
+  const [churnB, setChurnB]                     = useState('12');
+  const [contYr1, setContYr1]                   = useState('80');
+  const [contYr2, setContYr2]                   = useState('40');
+  const [contYr3, setContYr3]                   = useState('20');
+  const [linesB, setLinesB]                     = useState<TherapyLine[]>(DEFAULT_LINES);
 
-  const maxSavings = Math.max(...results.lineBreakdown.map(l => l.savings), 1);
+  const updateA = (key: string, field: 'utilizationPct' | 'annualCostPerUser', v: string) =>
+    setLinesA(prev => prev.map(l => l.key === key ? { ...l, [field]: parseFloat(v) || 0 } : l));
+
+  const updateB = (key: string, field: 'utilizationPct' | 'annualCostPerUser' | 'reductionPct', v: string) =>
+    setLinesB(prev => prev.map(l => l.key === key ? { ...l, [field]: parseFloat(v) || 0 } : l));
+
+  const n = parseFloat(membersPerYear) || 0;
+
+  const model = useMemo(() => calcFiveYearModel(
+    n,
+    {
+      avgDurationYears: parseFloat(durationYears) || 0,
+      churnRatePct:     parseFloat(churnA) || 0,
+      therapyLines:     linesA,
+    },
+    {
+      pmpm:              parseFloat(pmpm) || 0,
+      avgDurationMonths: parseFloat(durationMonths) || 0,
+      churnRatePct:      parseFloat(churnB) || 0,
+      continuationPct:   [parseFloat(contYr1) || 0, parseFloat(contYr2) || 0, parseFloat(contYr3) || 0],
+      therapyLines:      linesB,
+    },
+  ), [n, durationYears, churnA, linesA, pmpm, durationMonths, churnB, contYr1, contYr2, contYr3, linesB]);
+
+  const yr1 = model.yearlyResults[0];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -59,171 +82,373 @@ export default function ROICalculatorScreen() {
 
       {/* ── Header ── */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
+        <View>
           <Text style={styles.logo}>Brainy<Text style={styles.logoAccent}>Act</Text></Text>
-          <View style={styles.headerBadge}>
+          <View style={styles.badge}>
             <Ionicons name="calculator" size={11} color="#A5B4FC" />
-            <Text style={styles.headerBadgeText}>Payor ROI Calculator</Text>
+            <Text style={styles.badgeText}>Payor ROI Calculator</Text>
           </View>
         </View>
         <Text style={styles.headerSub}>Insurance Cost-Savings Model</Text>
       </View>
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
 
-          {/* ── Card 1: Population & Program Cost ── */}
-          <View style={[styles.card, shadows.md]}>
+          {/* ── Shared Input ── */}
+          <View style={[styles.card, shadows.sm]}>
             <View style={styles.cardHeader}>
-              <Ionicons name="people-circle" size={20} color={colors.primary} />
-              <Text style={styles.cardTitle}>Population & Program</Text>
+              <Ionicons name="people-circle" size={18} color={colors.primary} />
+              <Text style={styles.cardTitle}>Population</Text>
             </View>
+            <View style={styles.sharedInputRow}>
+              <Text style={styles.inputLabel}>ASD Members Enrolled / Year</Text>
+              <View style={styles.inputBox}>
+                <Ionicons name="people-outline" size={13} color={colors.textMuted} style={{ marginRight: 4 }} />
+                <TextInput
+                  style={styles.textInput}
+                  value={membersPerYear}
+                  onChangeText={setMembersPerYear}
+                  keyboardType="numeric"
+                  placeholder="500"
+                  placeholderTextColor={colors.textMuted}
+                  selectTextOnFocus
+                />
+              </View>
+            </View>
+          </View>
 
-            <View style={styles.inputRow}>
+          {/* ── Program A: Behavioral Care ── */}
+          <View style={[styles.card, styles.cardA, shadows.md]}>
+            <View style={styles.cardHeader}>
+              <View style={styles.programChip}>
+                <Text style={styles.programChipText}>Program A  ·  Top-Down Approach</Text>
+              </View>
+            </View>
+            <Text style={styles.programLabel}>Behavioral Care</Text>
+
+            <View style={styles.twoCol}>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Covered Children</Text>
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="people-outline" size={14} color={colors.textMuted} style={styles.inputIcon} />
+                <Text style={styles.inputLabelLight}>Avg Duration (yrs)</Text>
+                <View style={styles.inputBoxDark}>
                   <TextInput
-                    style={styles.textInput}
-                    value={memberCount}
-                    onChangeText={setMemberCount}
+                    style={styles.textInputLight}
+                    value={durationYears}
+                    onChangeText={setDurationYears}
                     keyboardType="numeric"
-                    placeholder="500"
-                    placeholderTextColor={colors.textMuted}
+                    placeholder="3.5"
+                    placeholderTextColor="rgba(255,255,255,0.35)"
+                    selectTextOnFocus
                   />
                 </View>
               </View>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>BrainyAct Cost / Child / Yr</Text>
-                <View style={styles.inputWrapper}>
-                  <Text style={styles.inputPrefix}>$</Text>
+                <Text style={styles.inputLabelLight}>Churn Rate %</Text>
+                <View style={styles.inputBoxDark}>
                   <TextInput
-                    style={styles.textInput}
-                    value={programCost}
-                    onChangeText={setProgramCost}
+                    style={styles.textInputLight}
+                    value={churnA}
+                    onChangeText={setChurnA}
                     keyboardType="numeric"
-                    placeholder="1200"
-                    placeholderTextColor={colors.textMuted}
+                    placeholder="12"
+                    placeholderTextColor="rgba(255,255,255,0.35)"
+                    selectTextOnFocus
                   />
+                  <Text style={styles.inputSuf}>%</Text>
                 </View>
               </View>
             </View>
+            <Text style={styles.churnNote}>
+              Est. churn: ~{Math.round(n * (parseFloat(churnA) || 0) / 100)} members/yr — shown for reference only
+            </Text>
 
-            <View style={styles.programCostSummary}>
-              <Text style={styles.programCostLabel}>Total Program Cost</Text>
-              <Text style={styles.programCostValue}>{fmtDollars(results.programCost)}</Text>
-            </View>
-          </View>
-
-          {/* ── Card 2: Therapy Utilization ── */}
-          <View style={[styles.card, shadows.md]}>
-            <View style={styles.cardHeader}>
-              <Ionicons name="medkit" size={20} color={colors.primary} />
-              <Text style={styles.cardTitle}>Therapy Utilization</Text>
-            </View>
-
-            {/* Column headers */}
-            <View style={styles.tableHeader}>
-              <Text style={[styles.colLabel, { flex: 3 }]}>Therapy</Text>
-              <Text style={[styles.colLabel, { flex: 2, textAlign: 'center' }]}>Usage %</Text>
-              <Text style={[styles.colLabel, { flex: 2.5, textAlign: 'center' }]}>Avg Cost/Yr</Text>
-              <Text style={[styles.colLabel, { flex: 2, textAlign: 'center' }]}>Reduce %</Text>
-            </View>
-
-            {lines.map(line => (
-              <View key={line.key} style={styles.therapyRow}>
-                <View style={[styles.therapyDot, { backgroundColor: line.color }]} />
-                <Text style={styles.therapyName} numberOfLines={1}>{line.label}</Text>
-                <TextInput
-                  style={[styles.cellInput, { flex: 2 }]}
-                  value={String(line.utilizationPct)}
-                  onChangeText={v => updateLine(line.key, 'utilizationPct', v)}
-                  keyboardType="numeric"
-                  selectTextOnFocus
-                />
-                <TextInput
-                  style={[styles.cellInput, { flex: 2.5 }]}
-                  value={String(line.annualCostPerUser)}
-                  onChangeText={v => updateLine(line.key, 'annualCostPerUser', v)}
-                  keyboardType="numeric"
-                  selectTextOnFocus
-                />
-                <TextInput
-                  style={[styles.cellInput, { flex: 2 }]}
-                  value={String(line.reductionPct)}
-                  onChangeText={v => updateLine(line.key, 'reductionPct', v)}
-                  keyboardType="numeric"
-                  selectTextOnFocus
-                />
+            {/* Therapy table — Program A */}
+            <View style={styles.tableWrap}>
+              <View style={styles.tableHeaderRow}>
+                <Text style={[styles.colHead, { flex: 2.5 }]}>Therapy</Text>
+                <Text style={[styles.colHead, { flex: 1.5, textAlign: 'center' }]}>Usage %</Text>
+                <Text style={[styles.colHead, { flex: 2, textAlign: 'center' }]}>Cost / Yr</Text>
               </View>
-            ))}
-          </View>
-
-          {/* ── Card 3: ROI Results ── */}
-          <View style={[styles.card, shadows.lg, styles.resultsCard]}>
-            <View style={styles.cardHeader}>
-              <Ionicons name="trending-up" size={20} color="#fff" />
-              <Text style={[styles.cardTitle, { color: '#fff' }]}>ROI Results</Text>
-            </View>
-
-            {/* Hero metric */}
-            <View style={styles.heroMetric}>
-              <Text style={styles.heroLabel}>Net Annual Savings</Text>
-              <Text style={[styles.heroValue, { color: results.netSavings >= 0 ? '#6EE7B7' : '#FCA5A5' }]}>
-                {fmtDollarsShort(results.netSavings)}
-              </Text>
-            </View>
-
-            {/* Summary chips */}
-            <View style={styles.chipsRow}>
-              <View style={styles.chip}>
-                <Text style={styles.chipLabel}>ROI Multiple</Text>
-                <Text style={styles.chipValue}>{results.roiMultiple.toFixed(1)}×</Text>
-              </View>
-              <View style={styles.chip}>
-                <Text style={styles.chipLabel}>Gross Savings</Text>
-                <Text style={styles.chipValue}>{fmtDollars(results.totalSavings)}</Text>
-              </View>
-              <View style={styles.chip}>
-                <Text style={styles.chipLabel}>Per-Member Net</Text>
-                <Text style={[styles.chipValue, { color: results.perMemberSavings >= 0 ? '#6EE7B7' : '#FCA5A5' }]}>
-                  {fmtDollars(results.perMemberSavings)}
-                </Text>
-              </View>
-            </View>
-
-            {/* Savings breakdown bars */}
-            <View style={styles.breakdownSection}>
-              <Text style={styles.breakdownTitle}>Savings by Therapy</Text>
-              {results.lineBreakdown.map(item => (
-                <View key={item.key} style={styles.breakdownRow}>
-                  <Text style={styles.breakdownLabel} numberOfLines={1}>{item.label}</Text>
-                  <View style={styles.barTrack}>
-                    <View
-                      style={[
-                        styles.barFill,
-                        {
-                          backgroundColor: item.color,
-                          width: `${Math.max((item.savings / maxSavings) * 100, 2)}%`,
-                        },
-                      ]}
-                    />
-                  </View>
-                  <Text style={styles.breakdownValue}>{fmtDollars(item.savings)}</Text>
+              {linesA.map(l => (
+                <View key={l.key} style={styles.tableRow}>
+                  <View style={[styles.dot, { backgroundColor: l.color }]} />
+                  <Text style={[styles.therapyName, { flex: 2.5 }]} numberOfLines={1}>{l.label}</Text>
+                  <TextInput
+                    style={[styles.cellInput, { flex: 1.5 }]}
+                    value={String(l.utilizationPct)}
+                    onChangeText={v => updateA(l.key, 'utilizationPct', v)}
+                    keyboardType="numeric"
+                    selectTextOnFocus
+                  />
+                  <TextInput
+                    style={[styles.cellInput, { flex: 2 }]}
+                    value={String(l.annualCostPerUser)}
+                    onChangeText={v => updateA(l.key, 'annualCostPerUser', v)}
+                    keyboardType="numeric"
+                    selectTextOnFocus
+                  />
                 </View>
               ))}
             </View>
+
+            <View style={styles.outputRow}>
+              <View style={styles.outputItem}>
+                <Text style={styles.outputLabel}>Yr 1 Active Users</Text>
+                <Text style={styles.outputValue}>{n.toLocaleString()}</Text>
+              </View>
+              <View style={styles.outputDivider} />
+              <View style={styles.outputItem}>
+                <Text style={styles.outputLabel}>Yr 1 Total Cost</Text>
+                <Text style={styles.outputValueHero}>{fmt(yr1?.costA ?? 0)}</Text>
+              </View>
+            </View>
           </View>
 
-          {/* ── Disclaimer ── */}
+          {/* ── Program B: BrainyAct ── */}
+          <View style={[styles.card, styles.cardB, shadows.md]}>
+            <View style={styles.cardHeader}>
+              <View style={[styles.programChip, styles.programChipB]}>
+                <Text style={styles.programChipText}>Program B  ·  Bottom-Up Approach</Text>
+              </View>
+            </View>
+            <Text style={styles.programLabel}>BrainyAct</Text>
+
+            <View style={styles.twoCol}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabelLight}>Cost / Member / Month</Text>
+                <View style={styles.inputBoxDark}>
+                  <Text style={styles.inputPre}>$</Text>
+                  <TextInput
+                    style={styles.textInputLight}
+                    value={pmpm}
+                    onChangeText={setPmpm}
+                    keyboardType="numeric"
+                    placeholder="100"
+                    placeholderTextColor="rgba(255,255,255,0.35)"
+                    selectTextOnFocus
+                  />
+                </View>
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabelLight}>Avg Duration (months)</Text>
+                <View style={styles.inputBoxDark}>
+                  <TextInput
+                    style={styles.textInputLight}
+                    value={durationMonths}
+                    onChangeText={setDurationMonths}
+                    keyboardType="numeric"
+                    placeholder="6"
+                    placeholderTextColor="rgba(255,255,255,0.35)"
+                    selectTextOnFocus
+                  />
+                </View>
+              </View>
+            </View>
+
+            <View style={[styles.twoCol, { marginBottom: 0 }]}>
+              <View style={[styles.inputGroup, { flex: 0.5 }]}>
+                <Text style={styles.inputLabelLight}>Churn Rate %</Text>
+                <View style={styles.inputBoxDark}>
+                  <TextInput
+                    style={styles.textInputLight}
+                    value={churnB}
+                    onChangeText={setChurnB}
+                    keyboardType="numeric"
+                    placeholder="12"
+                    placeholderTextColor="rgba(255,255,255,0.35)"
+                    selectTextOnFocus
+                  />
+                  <Text style={styles.inputSuf}>%</Text>
+                </View>
+              </View>
+            </View>
+            <Text style={styles.churnNote}>
+              Est. churn: ~{Math.round(n * (parseFloat(churnB) || 0) / 100)} members/yr — occurs over first {durationMonths} months
+            </Text>
+
+            <Text style={styles.sectionLabel}>% Continuing ABA After BrainyAct</Text>
+            <View style={styles.threeCol}>
+              {[
+                { label: 'Year 1', value: contYr1, set: setContYr1 },
+                { label: 'Year 2', value: contYr2, set: setContYr2 },
+                { label: 'Year 3', value: contYr3, set: setContYr3 },
+              ].map(({ label, value, set }) => (
+                <View key={label} style={styles.inputGroup}>
+                  <Text style={styles.inputLabelLight}>{label}</Text>
+                  <View style={styles.inputBoxDark}>
+                    <TextInput
+                      style={styles.textInputLight}
+                      value={value}
+                      onChangeText={set}
+                      keyboardType="numeric"
+                      placeholder="0"
+                      placeholderTextColor="rgba(255,255,255,0.35)"
+                      selectTextOnFocus
+                    />
+                    <Text style={styles.inputSuf}>%</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+
+            {/* Therapy table — Program B */}
+            <View style={styles.tableWrap}>
+              <View style={styles.tableHeaderRow}>
+                <Text style={[styles.colHead, { flex: 2 }]}>Therapy</Text>
+                <Text style={[styles.colHead, { flex: 1.5, textAlign: 'center' }]}>Usage %</Text>
+                <Text style={[styles.colHead, { flex: 2, textAlign: 'center' }]}>Cost / Yr</Text>
+                <Text style={[styles.colHead, { flex: 1.5, textAlign: 'center' }]}>Reduce %</Text>
+              </View>
+              {linesB.map(l => (
+                <View key={l.key} style={styles.tableRow}>
+                  <View style={[styles.dot, { backgroundColor: l.color }]} />
+                  <Text style={[styles.therapyName, { flex: 2 }]} numberOfLines={1}>{l.label}</Text>
+                  <TextInput
+                    style={[styles.cellInput, { flex: 1.5 }]}
+                    value={String(l.utilizationPct)}
+                    onChangeText={v => updateB(l.key, 'utilizationPct', v)}
+                    keyboardType="numeric"
+                    selectTextOnFocus
+                  />
+                  <TextInput
+                    style={[styles.cellInput, { flex: 2 }]}
+                    value={String(l.annualCostPerUser)}
+                    onChangeText={v => updateB(l.key, 'annualCostPerUser', v)}
+                    keyboardType="numeric"
+                    selectTextOnFocus
+                  />
+                  <TextInput
+                    style={[styles.cellInput, { flex: 1.5 }]}
+                    value={String(l.reductionPct)}
+                    onChangeText={v => updateB(l.key, 'reductionPct', v)}
+                    keyboardType="numeric"
+                    selectTextOnFocus
+                  />
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.outputRow}>
+              <View style={styles.outputItem}>
+                <Text style={styles.outputLabel}>Yr 1 BrainyAct Cost</Text>
+                <Text style={styles.outputValue}>{fmt(n * (parseFloat(pmpm) || 0) * (parseFloat(durationMonths) || 0))}</Text>
+              </View>
+              <View style={styles.outputDivider} />
+              <View style={styles.outputItem}>
+                <Text style={styles.outputLabel}>Yr 1 Total Cost</Text>
+                <Text style={styles.outputValueHero}>{fmt(yr1?.costB ?? 0)}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* ── 5-Year Comparison Table ── */}
+          <View style={[styles.card, shadows.md]}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="bar-chart" size={18} color={colors.primary} />
+              <Text style={styles.cardTitle}>5-Year Comparison</Text>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View>
+                <View style={styles.tableRow5}>
+                  <Text style={[styles.cell5Label, { width: 130 }]} />
+                  {model.yearlyResults.map(r => (
+                    <Text key={r.year} style={styles.cell5Head}>Yr {r.year}</Text>
+                  ))}
+                </View>
+
+                <View style={styles.dividerRow}>
+                  <Text style={styles.dividerLabel}>Program A — Behavioral Care</Text>
+                </View>
+                <View style={styles.tableRow5}>
+                  <Text style={[styles.cell5Label, { width: 130 }]}>Active Cohorts</Text>
+                  {model.yearlyResults.map(r => (
+                    <Text key={r.year} style={styles.cell5}>{r.activeCohorts}×</Text>
+                  ))}
+                </View>
+                <View style={styles.tableRow5}>
+                  <Text style={[styles.cell5Label, { width: 130 }]}>Annual Cost</Text>
+                  {model.yearlyResults.map(r => (
+                    <Text key={r.year} style={[styles.cell5, styles.cell5A]}>{fmt(r.costA)}</Text>
+                  ))}
+                </View>
+
+                <View style={styles.dividerRow}>
+                  <Text style={styles.dividerLabel}>Program B — BrainyAct</Text>
+                </View>
+                <View style={styles.tableRow5}>
+                  <Text style={[styles.cell5Label, { width: 130 }]}>Annual Cost</Text>
+                  {model.yearlyResults.map(r => (
+                    <Text key={r.year} style={[styles.cell5, styles.cell5B]}>{fmt(r.costB)}</Text>
+                  ))}
+                </View>
+
+                <View style={styles.dividerRow}>
+                  <Text style={styles.dividerLabel}>Savings (A − B)</Text>
+                </View>
+                <View style={styles.tableRow5}>
+                  <Text style={[styles.cell5Label, { width: 130 }]}>Year Net</Text>
+                  {model.yearlyResults.map(r => (
+                    <Text key={r.year} style={[styles.cell5, styles.cell5Net]}>{fmt(r.netSavings)}</Text>
+                  ))}
+                </View>
+                <View style={styles.tableRow5}>
+                  <Text style={[styles.cell5Label, { width: 130 }]}>Cumulative Net</Text>
+                  {model.yearlyResults.map(r => (
+                    <Text key={r.year} style={[styles.cell5, styles.cell5Cum]}>{fmt(r.cumulativeNet)}</Text>
+                  ))}
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+
+          {/* ── ROI Summary ── */}
+          <View style={[styles.card, styles.cardSummary, shadows.lg]}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="trending-up" size={18} color="#fff" />
+              <Text style={[styles.cardTitle, { color: '#fff' }]}>ROI Summary</Text>
+            </View>
+
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>5-Yr Total Cost: Program A</Text>
+              <Text style={styles.summaryValA}>{fmt(model.programACost5yr)}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>5-Yr Total Cost: Program B</Text>
+              <Text style={styles.summaryValB}>{fmt(model.programBCost5yr)}</Text>
+            </View>
+
+            <View style={styles.summaryDivider} />
+
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, { color: '#fff', fontWeight: '600' }]}>
+                5-Year Net Savings
+              </Text>
+              <Text style={styles.summaryHero}>{fmt(model.netSavings5yr)}</Text>
+            </View>
+
+            <View style={styles.chipsRow}>
+              <View style={styles.summaryChip}>
+                <Text style={styles.summaryChipLabel}>ROI Multiple</Text>
+                <Text style={styles.summaryChipValue}>{model.roiMultiple.toFixed(1)}×</Text>
+              </View>
+              <View style={styles.summaryChip}>
+                <Text style={styles.summaryChipLabel}>Return per $1 Spent</Text>
+                <Text style={styles.summaryChipValue}>${model.returnPerDollar.toFixed(2)}</Text>
+              </View>
+            </View>
+
+            <Text style={styles.callout}>
+              BrainyAct members complete care in {durationMonths} months. Traditional ABA costs
+              accumulate for {durationYears} years per cohort — Program B saves{' '}
+              {fmt(model.netSavings5yr)} over 5 years.
+            </Text>
+          </View>
+
           <Text style={styles.disclaimer}>
             * Projections based on entered utilization rates and industry cost benchmarks.
             Actual savings may vary. For illustrative purposes only.
@@ -238,12 +463,8 @@ export default function ROICalculatorScreen() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
 
-  // Header
   header: {
     backgroundColor: '#1E40AF',
     paddingHorizontal: spacing.md,
@@ -252,47 +473,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  headerLeft: {
-    flexDirection: 'column',
-    gap: 4,
-  },
-  logo: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#fff',
-    letterSpacing: -0.5,
-  },
-  logoAccent: {
-    color: '#A5B4FC',
-  },
-  headerBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  logo:       { fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
+  logoAccent: { color: '#A5B4FC' },
+  badge: {
+    flexDirection: 'row', alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: borderRadius.full,
-    gap: 4,
-    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.sm, paddingVertical: 3,
+    borderRadius: borderRadius.full, gap: 4,
+    alignSelf: 'flex-start', marginTop: 4,
   },
-  headerBadgeText: {
-    ...typography.caption,
-    color: '#C7D2FE',
-    fontWeight: '600',
-  },
-  headerSub: {
-    ...typography.bodySmall,
-    color: '#93C5FD',
-    textAlign: 'right',
-  },
+  badgeText: { ...typography.caption, color: '#C7D2FE', fontWeight: '600' },
+  headerSub: { ...typography.bodySmall, color: '#93C5FD', textAlign: 'right' },
 
-  scroll: {
-    padding: spacing.md,
-    paddingBottom: spacing.xxl,
-    gap: spacing.md,
-  },
+  scroll: { padding: spacing.md, paddingBottom: spacing.xxl, gap: spacing.md },
 
-  // Cards
   card: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
@@ -300,214 +494,151 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  cardA:       { backgroundColor: '#1E3A8A', borderColor: '#1E40AF' },
+  cardB:       { backgroundColor: '#312E81', borderColor: '#4338CA' },
+  cardSummary: { backgroundColor: '#064E3B', borderColor: '#065F46' },
+
   cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
+    flexDirection: 'row', alignItems: 'center',
+    gap: spacing.sm, marginBottom: spacing.sm,
   },
-  cardTitle: {
-    ...typography.h4,
-    color: colors.text,
+  cardTitle: { ...typography.h4, color: colors.text },
+
+  programChip: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: spacing.sm, paddingVertical: 3,
+    borderRadius: borderRadius.full,
+  },
+  programChipB:   { backgroundColor: 'rgba(255,255,255,0.12)' },
+  programChipText: {
+    ...typography.caption, color: '#C7D2FE',
+    fontWeight: '700', letterSpacing: 0.5,
+  },
+  programLabel: {
+    fontSize: 20, fontWeight: '700', color: '#fff',
+    marginBottom: spacing.md, letterSpacing: -0.3,
   },
 
-  // Population inputs
-  inputRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
+  sharedInputRow: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', gap: spacing.sm,
   },
-  inputGroup: {
-    flex: 1,
-  },
-  inputLabel: {
-    ...typography.label,
-    color: colors.textSecondary,
-    marginBottom: 6,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.sm,
-    paddingHorizontal: spacing.sm,
-    backgroundColor: colors.surfaceAlt,
-    height: 40,
-  },
-  inputIcon: {
-    marginRight: 4,
-  },
-  inputPrefix: {
-    ...typography.body,
-    color: colors.textSecondary,
-    marginRight: 2,
-  },
-  textInput: {
-    flex: 1,
-    ...typography.body,
-    color: colors.text,
-    padding: 0,
-  },
-  programCostSummary: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: colors.primaryLight,
-    borderRadius: borderRadius.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    marginTop: 4,
-  },
-  programCostLabel: {
-    ...typography.label,
-    color: colors.primary,
-  },
-  programCostValue: {
-    ...typography.h4,
-    color: colors.primaryDark,
+  inputLabel:      { ...typography.label, color: colors.textSecondary, flex: 1 },
+  inputLabelLight: { ...typography.caption, color: '#A5B4FC', marginBottom: 4 },
+  sectionLabel: {
+    ...typography.label, color: '#A5B4FC',
+    marginTop: spacing.sm, marginBottom: spacing.xs,
   },
 
-  // Therapy table
-  tableHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-    paddingLeft: 18,
+  inputBox: {
+    flexDirection: 'row', alignItems: 'center',
+    borderWidth: 1, borderColor: colors.border, borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.sm, backgroundColor: colors.surfaceAlt,
+    height: 38, width: 130,
   },
-  colLabel: {
-    ...typography.caption,
-    color: colors.textMuted,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  inputBoxDark: {
+    flexDirection: 'row', alignItems: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.sm, backgroundColor: 'rgba(0,0,0,0.2)', height: 36,
   },
-  therapyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-    gap: 6,
+  inputPre: { ...typography.body, color: 'rgba(255,255,255,0.55)', marginRight: 2 },
+  inputSuf: { ...typography.body, color: 'rgba(255,255,255,0.55)', marginLeft: 2 },
+  textInput:      { flex: 1, ...typography.body, color: colors.text, padding: 0 },
+  textInputLight: { flex: 1, ...typography.body, color: '#fff', padding: 0 },
+
+  twoCol:     { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
+  threeCol:   { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
+  inputGroup: { flex: 1 },
+
+  churnNote: {
+    ...typography.caption, color: 'rgba(165,180,252,0.75)',
+    marginBottom: spacing.sm, fontStyle: 'italic',
   },
-  therapyDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+
+  tableWrap: {
+    borderRadius: borderRadius.sm,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    overflow: 'hidden', marginTop: spacing.sm,
   },
-  therapyName: {
-    flex: 3,
-    ...typography.bodySmall,
-    color: colors.text,
-    fontWeight: '500',
+  tableHeaderRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: spacing.xs, paddingVertical: 6,
+    backgroundColor: 'rgba(0,0,0,0.2)', paddingLeft: 18,
   },
+  colHead: {
+    ...typography.caption, color: 'rgba(165,180,252,0.8)',
+    fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5,
+  },
+  tableRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: spacing.xs, paddingVertical: 5,
+    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.07)', gap: 4,
+  },
+  dot:         { width: 7, height: 7, borderRadius: 4 },
+  therapyName: { ...typography.bodySmall, color: '#E0E7FF', fontWeight: '500' },
   cellInput: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    ...typography.bodySmall,
-    color: colors.text,
-    textAlign: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 5, paddingHorizontal: 4, paddingVertical: 3,
+    ...typography.caption, color: '#fff', textAlign: 'center',
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
+
+  outputRow: {
+    flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md,
+    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)',
+    paddingTop: spacing.sm,
+  },
+  outputItem:      { flex: 1, alignItems: 'center' },
+  outputDivider:   { width: 1, backgroundColor: 'rgba(255,255,255,0.15)' },
+  outputLabel:     { ...typography.caption, color: '#A5B4FC', marginBottom: 2, textAlign: 'center' },
+  outputValue:     { ...typography.h4, color: '#fff' },
+  outputValueHero: { fontSize: 20, fontWeight: '700', color: '#6EE7B7' },
+
+  // 5-year table
+  tableRow5: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 7,
+    borderBottomWidth: 1, borderBottomColor: colors.borderLight,
+  },
+  cell5Head:  { width: 68, ...typography.label, color: colors.textMuted, textAlign: 'center', fontWeight: '700' },
+  cell5Label: { ...typography.bodySmall, color: colors.textSecondary, paddingLeft: 4 },
+  cell5:      { width: 68, ...typography.bodySmall, color: colors.text, textAlign: 'center' },
+  cell5A:     { color: '#DC2626', fontWeight: '600' },
+  cell5B:     { color: '#059669', fontWeight: '600' },
+  cell5Net:   { fontWeight: '700', color: colors.text },
+  cell5Cum:   { fontWeight: '700', color: colors.primary },
+  dividerRow: {
     backgroundColor: colors.surfaceAlt,
+    paddingHorizontal: spacing.sm, paddingVertical: 4,
+    borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.border,
+  },
+  dividerLabel: {
+    ...typography.caption, color: colors.textMuted,
+    fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5,
   },
 
-  // Results card
-  resultsCard: {
-    backgroundColor: '#1E3A8A',
-    borderColor: '#1E40AF',
+  // Summary card
+  summaryRow:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
+  summaryLabel:  { ...typography.body, color: '#A7F3D0' },
+  summaryValA:   { ...typography.h4, color: '#FCA5A5' },
+  summaryValB:   { ...typography.h4, color: '#6EE7B7' },
+  summaryHero:   { fontSize: 26, fontWeight: '800', color: '#fff' },
+  summaryDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.15)', marginVertical: spacing.sm },
+  chipsRow:      { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm, marginBottom: spacing.md },
+  summaryChip: {
+    flex: 1, backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: borderRadius.md, padding: spacing.sm, alignItems: 'center',
   },
-  heroMetric: {
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
-    marginBottom: spacing.md,
-  },
-  heroLabel: {
-    ...typography.label,
-    color: '#93C5FD',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  heroValue: {
-    fontSize: 42,
-    fontWeight: '800',
-    letterSpacing: -1,
-  },
-  chipsRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  chip: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: borderRadius.md,
-    padding: spacing.sm,
-    alignItems: 'center',
-  },
-  chipLabel: {
-    ...typography.caption,
-    color: '#93C5FD',
-    marginBottom: 2,
-    textAlign: 'center',
-  },
-  chipValue: {
-    ...typography.h4,
-    color: '#fff',
+  summaryChipLabel: { ...typography.caption, color: '#6EE7B7', marginBottom: 2 },
+  summaryChipValue: { ...typography.h3, color: '#fff' },
+  callout: {
+    ...typography.bodySmall, color: '#6EE7B7',
+    backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: borderRadius.sm,
+    padding: spacing.sm, lineHeight: 18,
   },
 
-  // Breakdown bars
-  breakdownSection: {
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
-    paddingTop: spacing.md,
-  },
-  breakdownTitle: {
-    ...typography.label,
-    color: '#93C5FD',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: spacing.sm,
-  },
-  breakdownRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-    gap: spacing.sm,
-  },
-  breakdownLabel: {
-    ...typography.bodySmall,
-    color: '#CBD5E1',
-    width: 110,
-  },
-  barTrack: {
-    flex: 1,
-    height: 8,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  breakdownValue: {
-    ...typography.label,
-    color: '#fff',
-    width: 56,
-    textAlign: 'right',
-  },
-
-  // Disclaimer
   disclaimer: {
-    ...typography.caption,
-    color: colors.textMuted,
-    textAlign: 'center',
-    paddingHorizontal: spacing.md,
-    lineHeight: 16,
+    ...typography.caption, color: colors.textMuted,
+    textAlign: 'center', paddingHorizontal: spacing.md, lineHeight: 16,
   },
 });

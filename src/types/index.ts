@@ -94,29 +94,45 @@ export interface RealLifeImprovement {
 
 // ── ROI Calculator types ─────────────────────────────────────────────────────
 
-export interface ROITherapyLine {
+export interface TherapyLine {
   key: string;
   label: string;
-  icon: string;
   color: string;
-  utilizationPct: number;    // % of members currently using (0–100)
-  annualCostPerUser: number; // avg annual cost per member using (USD)
-  reductionPct: number;      // expected % reduction from BrainyAct (0–100)
+  utilizationPct: number;    // % of members using this therapy (0–100)
+  annualCostPerUser: number; // avg annual cost per user (USD)
+  reductionPct: number;      // step-down reduction % applied in Program B (0–100)
 }
 
-export interface ROIInputs {
-  memberCount: number;
-  programCostPerMember: number;
-  therapyLines: ROITherapyLine[];
+export interface ProgramAInputs {
+  avgDurationYears: number;   // how long members stay in traditional ABA
+  churnRatePct: number;       // shown separately, not baked into cohort math
+  therapyLines: TherapyLine[];
 }
 
-export interface ROIResults {
-  totalSavings: number;
-  programCost: number;
-  netSavings: number;
-  roiMultiple: number;
-  perMemberSavings: number;
-  lineBreakdown: { key: string; label: string; savings: number; color: string }[];
+export interface ProgramBInputs {
+  pmpm: number;               // BrainyAct cost per member per month
+  avgDurationMonths: number;  // how long members are in BrainyAct
+  churnRatePct: number;       // shown separately
+  continuationPct: [number, number, number]; // % still using ABA: [yr1, yr2, yr3] post-BrainyAct
+  therapyLines: TherapyLine[]; // reductionPct applied to continuation cost
+}
+
+export interface YearResult {
+  year: number;
+  activeCohorts: number;  // Program A stacked cohorts
+  costA: number;
+  costB: number;
+  netSavings: number;     // costA - costB
+  cumulativeNet: number;
+}
+
+export interface FiveYearModel {
+  yearlyResults: YearResult[];
+  programACost5yr: number;
+  programBCost5yr: number;
+  netSavings5yr: number;
+  roiMultiple: number;        // programACost5yr / programBCost5yr
+  returnPerDollar: number;    // netSavings5yr / programBCost5yr
 }
 
 // ── Legacy types (kept for backward compat with old components) ─────────────
