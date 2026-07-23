@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrainyAct ROI Calculator — v6</title>
+  <style>
+    :root{
+      --nav:#143a67; --nav2:#10325a; --bg:#edf2f8; --card:#fff; --line:#d8e2f1;
+      --text:#1e2a3e; --muted:#6a7b96; --blue:#2f73f1; --purple:#7b47ff;
+      --green:#0ea04b; --red:#d63b3b;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;line-height:1.35}
+    .topbar{background:linear-gradient(180deg,var(--nav),var(--nav2));color:#fff;padding:14px 24px 16px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+    .brand-wrap{display:flex;align-items:center;gap:14px;min-width:0}
+    .logo-slot{width:74px;height:74px;border-radius:12px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);display:grid;place-items:center;overflow:hidden;flex:0 0 auto}
+    .logo-slot img{width:100%;height:100%;object-fit:contain;background:#fff}
+    .logo-placeholder{font-size:11px;line-height:1.2;text-align:center;color:#d9e6ff;font-weight:700;padding:6px}
+    .title-block h1{margin:0;font-size:36px;font-weight:800;line-height:1.08}
+    .title-block .sub{margin-top:4px;color:#c7d7ef;font-size:20px;font-weight:500}
+    .badge{border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:9px 14px;color:#e8f0ff;background:rgba(255,255,255,.08);font-weight:700;font-size:16px;white-space:nowrap}
+    .app{display:grid;grid-template-columns:400px 1fr;gap:14px;padding:14px;min-height:calc(100vh - 104px)}
+    .sidebar{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;overflow:auto;max-height:calc(100vh - 124px);position:sticky;top:8px}
+    .side-section{border-bottom:1px solid #e8edf7;padding-bottom:10px;margin-bottom:10px}
+    .side-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+    .side-title{margin:0 0 8px;font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:#58729b;font-weight:900}
+    .field{margin-bottom:8px}
+    .label{font-size:12px;font-weight:700;color:#5e7090;margin-bottom:4px}
+    input,select{width:100%;border:1px solid #ccd8ea;border-radius:9px;padding:8px 10px;font-size:14px;font-weight:500;color:#1b2a43;background:#fbfdff}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .ok{margin-top:5px;border-radius:8px;padding:6px 8px;text-align:center;font-size:12px;font-weight:800;background:#d9f0de;color:#157741}
+    .actions{display:grid;gap:7px}
+    button{border:none;border-radius:10px;padding:9px 11px;font-size:13px;font-weight:800;cursor:pointer}
+    .btn-primary{background:var(--blue);color:#fff}
+    .btn-light{background:#edf3ff;color:#214395}
+    .btn-danger{background:#ffe9e9;color:#a42c2c}
+    .btn-print{background:#0c7a3f;color:#fff}
+    .slider-pill{border:1px solid #d9e3f2;background:#f7faff;border-radius:999px;padding:7px 9px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-bottom:7px}
+    .slabel{font-size:11px;font-weight:800;color:#5d7194;margin-bottom:4px}
+    .slider-pill input[type="range"]{width:100%;appearance:none;height:8px;border-radius:999px;background:linear-gradient(90deg,#2f73f1,#7b47ff);border:none;padding:0}
+    .slider-pill input[type="range"]::-webkit-slider-thumb{appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid #2f73f1}
+    .slider-pill input[type="range"]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid #2f73f1}
+    .pill-val{font-size:12px;font-weight:900;color:#2f73f1;background:#eaf1ff;border:1px solid #d4e2ff;border-radius:999px;padding:5px 8px;min-width:52px;text-align:center}
+    .main{display:grid;gap:12px}
+    .ribbon{background:#fffaf0;border:1px solid #edcf83;border-radius:12px;padding:10px 12px;color:#7b5513;font-size:13px}
+    .ribbon b{font-weight:800;color:#8d5a00}
+    .cards2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .program-card{background:#fff;border-radius:14px;padding:14px 16px;border:2px solid #e1e9f8;box-shadow:0 1px 0 rgba(18,34,71,.03)}
+    .program-a{border-color:#76a8ff}
+    .program-b{border-color:#c4a8ff}
+    .card-cap{font-size:11px;text-transform:uppercase;letter-spacing:.9px;font-weight:900;margin-bottom:3px}
+    .program-a .card-cap{color:#2f73f1}
+    .program-b .card-cap{color:#7b47ff}
+    .card-title{margin:0 0 2px;font-size:34px;font-weight:800;line-height:1.06}
+    .card-sub{font-size:13px;color:#627695;line-height:1.2;margin-bottom:10px}
+    .metric-row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ecf1f9;padding:8px 0;font-size:14px}
+    .metric-row span:first-child{color:#5f7292}
+    .metric-row b{font-size:14px;font-weight:800}
+    .kpi-label{margin-top:8px;color:#607391;font-size:13px;font-weight:600}
+    .kpi-big{margin-top:3px;font-size:42px;font-weight:900;line-height:1;color:var(--green)}
+    .green{color:var(--green)} .red{color:var(--red)}
+    .detail{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px}
+    .detail h3{margin:0 0 4px;font-size:30px;font-weight:800}
+    .detail .sub{color:var(--muted);font-size:13px;margin-bottom:8px}
+    table{width:100%;border-collapse:separate;border-spacing:0;font-size:15px;border:1px solid #dfe7f5;border-radius:10px;overflow:hidden;background:#fff}
+    th,td{padding:9px;border-bottom:1px solid #edf2fa;text-align:right;font-weight:600}
+    th{background:#f3f7ff;color:#526789;font-size:12px;text-transform:uppercase;letter-spacing:.6px;font-weight:800}
+    th:first-child,td:first-child{text-align:left}
+    tbody tr:nth-child(even){background:#f8fbff}
+    tbody tr:last-child td{border-bottom:none}
+    .charts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .chart-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px}
+    .chart-card h4{margin:0 0 6px;font-size:18px;font-weight:800}
+    canvas{border:1px solid #e8eef9;border-radius:10px;background:#fff;padding:5px}
+
+    /* ── Final comparison summary ── */
+    .comparison-section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px}
+    .comparison-section h3{margin:0 0 4px;font-size:20px;font-weight:800}
+    .comparison-section .sub{color:var(--muted);font-size:13px;margin-bottom:10px}
+    .cmp-table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;border:1px solid #dfe7f5;border-radius:10px;overflow:hidden}
+    .cmp-table th{background:#f3f7ff;color:#526789;font-size:11px;text-transform:uppercase;letter-spacing:.6px;font-weight:800;padding:10px 12px;text-align:left;border-bottom:2px solid #dfe7f5}
+    .cmp-table td{padding:10px 12px;border-bottom:1px solid #edf2fa;font-weight:600;vertical-align:middle}
+    .cmp-table tbody tr:last-child td{border-bottom:none}
+    .cmp-table tbody tr:nth-child(even) td{background:#f8fbff}
+    .cmp-metric{color:#5f7292;font-size:13px;font-weight:700}
+    .cmp-a{color:#2f73f1}
+    .cmp-b{color:#7b47ff}
+    .tag{display:inline-block;border-radius:6px;padding:3px 8px;font-size:12px;font-weight:800}
+    .tag-red{background:#fff0f0;color:#b02020}
+    .tag-grn{background:#edfbf2;color:#0c7a3f}
+    .tag-amber{background:#fffbea;color:#8a5d00}
+
+    .legend-footer{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:12px;color:#5f7394;line-height:1.35}
+    .legend-footer h5{margin:0 0 6px;font-size:12px;letter-spacing:.7px;text-transform:uppercase;color:#4f6587;font-weight:900}
+    .legend-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    @media print{
+      body{background:#fff}
+      .app{grid-template-columns:1fr;padding:8px}
+      .sidebar, button, input[type="file"]{display:none !important}
+      .chart-card, .program-card, .detail, .ribbon, .legend-footer, .comparison-section{break-inside:avoid-page}
+    }
+    @media (max-width:1200px){
+      .app{grid-template-columns:1fr}
+      .sidebar{position:static;max-height:none}
+      .cards2,.charts,.legend-grid{grid-template-columns:1fr}
+      .title-block h1{font-size:30px}
+      .title-block .sub{font-size:16px}
+      .card-title{font-size:28px}
+      .kpi-big{font-size:34px}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-wrap">
+      <div class="logo-slot" id="logoSlot"><div class="logo-placeholder">YOUR<br>LOGO</div></div>
+      <div class="title-block">
+        <h1>BrainyAct ROI Calculator</h1>
+        <div class="sub">Health Insurance Payor · ASD Member Population</div>
+      </div>
+    </div>
+    <div class="badge">Actuarial Model · v6</div>
+  </header>
+
+  <div class="app">
+    <!-- ══ SIDEBAR ══ -->
+    <aside class="sidebar">
+      <section class="side-section">
+        <h3 class="side-title">Branding</h3>
+        <div class="field"><div class="label">Upload logo (PNG/JPG/SVG)</div><input id="logoInput" type="file" accept="image/*"></div>
+        <div class="actions"><button id="clearLogoBtn" class="btn-light">Reset Logo</button></div>
+      </section>
+
+      <section class="side-section">
+        <h3 class="side-title">Shared Assumptions</h3>
+        <div class="field"><div class="label">Members added each year</div><input id="annualNewMembers" type="number" value="1000"></div>
+        <div class="field"><div class="label">Projection years</div><input id="years" type="number" min="1" max="10" value="5"></div>
+        <div class="field"><div class="label">Annual churn % (both)</div><input id="churnRateAnnual" type="number" value="10" step="0.1"></div>
+      </section>
+
+      <section class="side-section">
+        <h3 class="side-title">Severity Mix</h3>
+        <div class="field">
+          <div class="label">Mode</div>
+          <select id="selectedLevel">
+            <option value="mixed" selected>Mixed distribution</option>
+            <option value="1">Level 1 only</option>
+            <option value="2">Level 2 only</option>
+            <option value="3">Level 3 only</option>
+          </select>
+        </div>
+        <div class="row2">
+          <div class="field"><div class="label">Level 1 (%)</div><input id="mixL1" type="number" value="50"></div>
+          <div class="field"><div class="label">Level 2 (%)</div><input id="mixL2" type="number" value="35"></div>
+        </div>
+        <div class="field"><div class="label">Level 3 (%)</div><input id="mixL3" type="number" value="15"></div>
+        <div id="mixCheck" class="ok">✓ Mix totals 100%</div>
+      </section>
+
+      <section class="side-section">
+        <h3 class="side-title">Annual Cost per Member (ABA baseline)</h3>
+        <div class="field"><div class="label">Level 1 — Mild ($)</div><input id="abaAnnualCostL1" type="number" value="36000"></div>
+        <div class="field"><div class="label">Level 2 — Moderate ($)</div><input id="abaAnnualCostL2" type="number" value="65000"></div>
+        <div class="field"><div class="label">Level 3 — Severe ($)</div><input id="abaAnnualCostL3" type="number" value="112000"></div>
+        <div class="field"><div class="label">ABA average duration (years)</div><input id="abaDurationYears" type="number" step="0.1" value="3.5"></div>
+      </section>
+
+      <section class="side-section">
+        <h3 class="side-title">BrainyAct Program</h3>
+        <div class="field"><div class="label">Monthly cost L1 ($)</div><input id="brainyMonthlyCostL1" type="number" value="1200"></div>
+        <div class="field"><div class="label">Monthly cost L2 ($)</div><input id="brainyMonthlyCostL2" type="number" value="1500"></div>
+        <div class="field"><div class="label">Monthly cost L3 ($)</div><input id="brainyMonthlyCostL3" type="number" value="1800"></div>
+        <div class="field"><div class="label">BrainyAct avg duration (months)</div><input id="brainyDurationMonths" type="number" value="6"></div>
+      </section>
+
+      <section class="side-section">
+        <h3 class="side-title">Step-down Utilization (Program B only)</h3>
+        <div class="slider-pill"><div><div class="slabel">Year 1 continue ABA</div><input id="contY1" type="range" min="0" max="100" value="20"></div><div class="pill-val" id="contY1Val">20%</div></div>
+        <div class="slider-pill"><div><div class="slabel">Year 2 continue ABA</div><input id="contY2" type="range" min="0" max="100" value="15"></div><div class="pill-val" id="contY2Val">15%</div></div>
+        <div class="slider-pill"><div><div class="slabel">Year 3 continue ABA</div><input id="contY3" type="range" min="0" max="100" value="10"></div><div class="pill-val" id="contY3Val">10%</div></div>
+        <div class="slider-pill"><div><div class="slabel">Year 4 continue ABA</div><input id="contY4" type="range" min="0" max="100" value="8"></div><div class="pill-val" id="contY4Val">8%</div></div>
+        <div class="slider-pill"><div><div class="slabel">Year 5 continue ABA</div><input id="contY5" type="range" min="0" max="100" value="5"></div><div class="pill-val" id="contY5Val">5%</div></div>
+        <div class="field"><div class="label">Continuation duration (years)</div><input id="continuationDurationYears" type="number" value="2" step="0.1"></div>
+        <div class="field"><div class="label">Continuation cost factor (1.0 = 100%)</div><input id="continuationCostFactor" type="number" value="1" step="0.05"></div>
+        <div class="field"><div class="label">ABA completion rate benchmark (%)</div><input id="abaCompletionRate" type="number" value="46" step="1"></div>
+        <div class="field"><div class="label">BrainyAct completion rate (%)</div><input id="brainyCompletionRate" type="number" value="80" step="1"></div>
+      </section>
+
+      <section class="side-section">
+        <h3 class="side-title">Actions</h3>
+        <div class="actions">
+          <button id="recalcBtn" class="btn-primary">Recalculate</button>
+          <button id="downloadCsvBtn" class="btn-light">Download CSV</button>
+          <button id="saveScenarioBtn" class="btn-light">Save Scenario</button>
+          <button id="loadScenarioBtn" class="btn-light">Load Scenario</button>
+          <button id="clearScenarioBtn" class="btn-danger">Clear Saved Scenario</button>
+          <button id="printBtn" class="btn-print">Print / Save PDF</button>
+        </div>
+      </section>
+    </aside>
+
+    <!-- ══ MAIN ══ -->
+    <main class="main">
+      <div id="assumptionRibbon" class="ribbon">Active assumptions will appear here.</div>
+
+      <!-- KPI program cards -->
+      <section class="cards2">
+        <article class="program-card program-a">
+          <div class="card-cap">Program A</div>
+          <h2 class="card-title">Behavioral Care</h2>
+          <div id="cardASub" class="card-sub">—</div>
+          <div class="metric-row"><span>Year 1 total cost</span><b id="a1">$0</b></div>
+          <div class="metric-row"><span>Year 1 net (A−B)</span><b id="net1a">$0</b></div>
+          <div class="metric-row"><span>5-year cumulative net (A−B)</span><b id="net5a">$0</b></div>
+          <div class="metric-row"><span>Break-even</span><b id="beA">Baseline</b></div>
+          <div class="kpi-label">5-Year total cost</div>
+          <div class="kpi-big red" id="a5">$0</div>
+          <div class="metric-row"><span>ROI</span><b id="roiA">—</b></div>
+          <div class="metric-row"><span>Return per $1 spent</span><b id="retA">—</b></div>
+        </article>
+        <article class="program-card program-b">
+          <div class="card-cap">Program B</div>
+          <h2 class="card-title">BrainyAct</h2>
+          <div id="cardBSub" class="card-sub">—</div>
+          <div class="metric-row"><span>Year 1 total cost</span><b id="b1">$0</b></div>
+          <div class="metric-row"><span>Year 1 net (A−B)</span><b id="net1b">$0</b></div>
+          <div class="metric-row"><span>5-year cumulative net (A−B)</span><b id="net5b">$0</b></div>
+          <div class="metric-row"><span>Break-even</span><b id="beB">—</b></div>
+          <div class="kpi-label">5-Year total cost</div>
+          <div class="kpi-big" id="b5">$0</div>
+          <div class="metric-row"><span>ROI</span><b id="roiB">—</b></div>
+          <div class="metric-row"><span>Return per $1 spent</span><b id="retB">—</b></div>
+        </article>
+      </section>
+
+      <!-- 5-Year detail table -->
+      <section class="detail">
+        <h3>5-Year Annual Detail</h3>
+        <div class="sub">Cohort-based enrollment, duration aging, churn, and BrainyAct step-down continuation are included.</div>
+        <div style="overflow:auto">
+          <table id="resultsTable">
+            <thead>
+              <tr>
+                <th>Year</th>
+                <th>New Members</th>
+                <th>ABA Active Members</th>
+                <th>ABA Program Cost</th>
+                <th>BrainyAct Episode Cost</th>
+                <th>Brainy→ABA Continuation</th>
+                <th>Program B Total Cost</th>
+                <th>Net Savings (A−B)</th>
+                <th>Cumulative Net</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Charts -->
+      <section class="charts">
+        <div class="chart-card"><h4>Annual Cost Trend</h4><canvas id="costTrendChart" height="180"></canvas></div>
+        <div class="chart-card"><h4>Cumulative Net Trend</h4><canvas id="netTrendChart" height="180"></canvas></div>
+      </section>
+
+      <!-- Final Comparison Summary -->
+      <section class="comparison-section">
+        <h3>Program Comparison Summary</h3>
+        <div class="sub">Side-by-side view of cost structure, duration, and value drivers for payor decision-makers.</div>
+        <table class="cmp-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Program A — Behavioral Care (ABA)</th>
+              <th>Program B — BrainyAct</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="cmp-metric">5-Year Total Cost</td>
+              <td class="cmp-a"><b id="cmpA5">—</b></td>
+              <td class="cmp-b"><b id="cmpB5">—</b></td>
+            </tr>
+            <tr>
+              <td class="cmp-metric">Year 1 Cost</td>
+              <td class="cmp-a"><b id="cmpA1">—</b></td>
+              <td class="cmp-b"><b id="cmpB1">—</b></td>
+            </tr>
+            <tr>
+              <td class="cmp-metric">Cost Trend</td>
+              <td><span class="tag tag-red">Increasing ↑</span></td>
+              <td><span class="tag tag-grn">Decreasing ↓</span></td>
+            </tr>
+            <tr>
+              <td class="cmp-metric">Avg Duration of Care</td>
+              <td id="cmpDurA" class="cmp-a">—</td>
+              <td id="cmpDurB" class="cmp-b">—</td>
+            </tr>
+            <tr>
+              <td class="cmp-metric">Member Accumulation</td>
+              <td><span class="tag tag-red">High — costs compound</span></td>
+              <td><span class="tag tag-grn">None — members cycle out</span></td>
+            </tr>
+            <tr>
+              <td class="cmp-metric">Natural Endpoint</td>
+              <td><span class="tag tag-amber">No — ongoing liability</span></td>
+              <td><span class="tag tag-grn">Yes — time-limited program</span></td>
+            </tr>
+            <tr>
+              <td class="cmp-metric">ROI</td>
+              <td><span class="tag tag-red">Low</span></td>
+              <td><span class="tag tag-grn">High</span></td>
+            </tr>
+            <tr>
+              <td class="cmp-metric">Cost Predictability</td>
+              <td><span class="tag tag-red">Low — open-ended</span></td>
+              <td><span class="tag tag-grn">High — fixed episode cost</span></td>
+            </tr>
+            <tr>
+              <td class="cmp-metric">Net 5-Yr Savings vs ABA</td>
+              <td>—</td>
+              <td class="cmp-b"><b id="cmpNet5">—</b></td>
+            </tr>
+            <tr>
+              <td class="cmp-metric">Return per $1 Spent</td>
+              <td>—</td>
+              <td class="cmp-b"><b id="cmpRet">—</b></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Assumptions legend -->
+      <section class="legend-footer">
+        <h5>Assumptions Legend (Payer Deck Format)</h5>
+        <div class="legend-grid">
+          <div><b>Cohort Model:</b> New ASD members are added each year and tracked by cohort. Program A costs stack until ABA duration ends, then that cohort ages out. Costs compound year-over-year with no natural endpoint.</div>
+          <div><b>Program B Completion:</b> BrainyAct episode cost is time-limited (months). After completion, a shrinking percentage of graduates continue ABA at step-down rates (adjustable per year Y1–Y5). Costs decline as more members graduate and step down.</div>
+          <div><b>Financial Outputs:</b> Net savings = Program A cost − Program B cost. ROI per $1 = 5-year net savings ÷ Program B 5-year cost. 10% annual churn applied to both programs. Severity mix and level-specific costs drive the weighted average.</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const scenarioKey = "brainyact_roi_scenario_v6";
+    const logoKey = "brainyact_logo_v6";
+    let latestRows = [];
+    let latestSummary = null;
+    let costTrendChart = null;
+    let netTrendChart = null;
+
+    const allFieldIds = [
+      "annualNewMembers","years","churnRateAnnual","selectedLevel","mixL1","mixL2","mixL3",
+      "abaAnnualCostL1","abaAnnualCostL2","abaAnnualCostL3","abaDurationYears",
+      "brainyMonthlyCostL1","brainyMonthlyCostL2","brainyMonthlyCostL3","brainyDurationMonths",
+      "contY1","contY2","contY3","contY4","contY5","continuationDurationYears","continuationCostFactor",
+      "abaCompletionRate","brainyCompletionRate"
+    ];
+
+    const num = (id) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : 0; };
+    const money = (n) => n.toLocaleString(undefined, { style:"currency", currency:"USD", maximumFractionDigits:0 });
+
+    function getScenarioObject(){
+      const o = {};
+      allFieldIds.forEach(id => o[id] = $(id).value);
+      return o;
+    }
+    function setScenarioObject(o){
+      allFieldIds.forEach(id => { if (o[id] !== undefined) $(id).value = o[id]; });
+    }
+
+    function updateSliderPills(){
+      ["contY1","contY2","contY3","contY4","contY5"].forEach(id => {
+        $(id + "Val").textContent = `${Math.round(num(id))}%`;
+      });
+    }
+
+    function getWeights(){
+      const mode = $("selectedLevel").value;
+      if(mode === "1") return {l1:1,l2:0,l3:0};
+      if(mode === "2") return {l1:0,l2:1,l3:0};
+      if(mode === "3") return {l1:0,l2:0,l3:1};
+      const l1 = num("mixL1"), l2 = num("mixL2"), l3 = num("mixL3");
+      const s = l1 + l2 + l3;
+      if(s <= 0) return {l1:1,l2:0,l3:0};
+      return {l1:l1/s, l2:l2/s, l3:l3/s};
+    }
+
+    function updateMixCheck(){
+      const t = num("mixL1") + num("mixL2") + num("mixL3");
+      const el = $("mixCheck");
+      if(Math.abs(t - 100) < 0.01){
+        el.textContent = "✓ Mix totals 100%";
+        el.style.background = "#d9f0de";
+        el.style.color = "#157741";
+      } else {
+        el.textContent = `⚠ Mix totals ${t.toFixed(1)}%`;
+        el.style.background = "#ffeecf";
+        el.style.color = "#8a5d00";
+      }
+    }
+
+    function calculate(){
+      updateSliderPills();
+      updateMixCheck();
+
+      const years = Math.max(1, Math.round(num("years")));
+      const annualNew = Math.max(0, num("annualNewMembers"));
+      const churn = 0.10;
+      $("churnRateAnnual").value = 10;
+
+      const {l1,l2,l3} = getWeights();
+      const abaDuration = Math.max(0.1, num("abaDurationYears"));
+      const abaLife = Math.ceil(abaDuration);
+      const abaAnnual = l1*num("abaAnnualCostL1") + l2*num("abaAnnualCostL2") + l3*num("abaAnnualCostL3");
+
+      const brainyMonths = Math.max(1, num("brainyDurationMonths"));
+      const brainyMonthly = l1*num("brainyMonthlyCostL1") + l2*num("brainyMonthlyCostL2") + l3*num("brainyMonthlyCostL3");
+      const brainyEpisode = brainyMonthly * brainyMonths;
+
+      const contRates = ["contY1","contY2","contY3","contY4","contY5"]
+        .map(id => Math.max(0, Math.min(1, num(id) / 100)));
+      const contYears = Math.max(0.1, num("continuationDurationYears"));
+      const contLife = Math.ceil(contYears);
+      const contFactor = Math.max(0, num("continuationCostFactor"));
+
+      const abaCompletionRate = Math.max(0, Math.min(1, num("abaCompletionRate") / 100));
+      const brainyCompletionRate = Math.max(0, Math.min(1, num("brainyCompletionRate") / 100));
+      const abaAnnualRetention = Math.pow(Math.max(abaCompletionRate, 0.0001), 1 / Math.max(abaDuration, 1));
+
+      const rows = [];
+      const abaC = [];
+      const contC = [];
+      let cumNet = 0;
+
+      for(let y = 1; y <= years; y++){
+        const newMembers = annualNew;
+        abaC.push({start:y, users:newMembers});
+
+        let abaActive = 0;
+        abaC.forEach(c => {
+          const age = y - c.start;
+          if(age < abaLife){
+            const churnAdj = c.users * Math.pow(1 - churn, age);
+            const compAdj = churnAdj * Math.pow(abaAnnualRetention, age);
+            abaActive += compAdj;
+          }
+        });
+
+        const abaCost = abaActive * abaAnnual;
+        const episodeCost = newMembers * brainyEpisode;
+        const contRate = contRates[Math.min(y - 1, contRates.length - 1)] || 0;
+        const notCompleted = 1 - brainyCompletionRate;
+        contC.push({start:y, users:newMembers * notCompleted * contRate});
+
+        let contActive = 0;
+        contC.forEach(c => {
+          const age = y - c.start;
+          if(age < contLife){
+            contActive += c.users * Math.pow(1 - churn, age);
+          }
+        });
+
+        const contCost = contActive * abaAnnual * contFactor;
+        const bTotal = episodeCost + contCost;
+        const net = abaCost - bTotal;
+        cumNet += net;
+        rows.push({ year:y, newMembers, abaActive, abaCost, episodeCost, contCost, bTotal, net, cumNet });
+      }
+
+      const y1r = rows[0] || {abaCost:0, bTotal:0};
+      const a1 = y1r.abaCost;
+      const b1 = y1r.bTotal;
+      const a5 = rows.reduce((s,r) => s + r.abaCost, 0);
+      const b5 = rows.reduce((s,r) => s + r.bTotal, 0);
+      const net1 = a1 - b1;
+      const net5 = a5 - b5;
+      const roiB = b5 > 0 ? net5 / b5 : 0;
+      const roiA = a5 > 0 ? (b5 - a5) / a5 : 0;
+      const be = rows.find(r => r.cumNet >= 0);
+      const beTxt = be ? `Year ${be.year}` : "No break-even in horizon";
+
+      // Assumption ribbon
+      $("assumptionRibbon").innerHTML =
+        `<b>Active assumptions:</b> ${Math.round(annualNew).toLocaleString()} members/yr · ` +
+        `Severity ${(l1*100).toFixed(1)}% / ${(l2*100).toFixed(1)}% / ${(l3*100).toFixed(1)}% · ` +
+        `Weighted ABA <b>${money(abaAnnual)}/member/yr</b> · ` +
+        `BrainyAct <b>${money(brainyMonthly)}/member/mo × ${brainyMonths} months</b> · ` +
+        `Churn <b>${(churn*100).toFixed(0)}%/yr</b> · ` +
+        `ABA completion <b>${(abaCompletionRate*100).toFixed(0)}%</b> · ` +
+        `BrainyAct completion <b>${(brainyCompletionRate*100).toFixed(0)}%</b>`;
+
+      // Program cards
+      $("cardASub").textContent = `${money(abaAnnual)}/member/yr · ${abaDuration.toFixed(1)} years avg`;
+      $("cardBSub").textContent = `${money(brainyMonthly)}/member/mo · ${brainyMonths.toFixed(0)} months avg`;
+      $("a1").textContent = money(a1);
+      $("a5").textContent = money(a5);
+      $("b1").textContent = money(b1);
+      $("b5").textContent = money(b5);
+      $("net1a").textContent = money(net1);
+      $("net5a").textContent = money(net5);
+      $("net1b").textContent = money(net1);
+      $("net5b").textContent = money(net5);
+      $("beA").textContent = "Baseline";
+      $("beB").textContent = beTxt;
+      $("roiA").textContent = `${(roiA*100).toFixed(1)}%`;
+      $("roiB").textContent = `${(roiB*100).toFixed(1)}%`;
+      $("retA").textContent = `$${(a5 > 0 ? b5 / a5 : 0).toFixed(2)}`;
+      $("retB").textContent = `$${(b5 > 0 ? a5 / b5 : 0).toFixed(2)}`;
+
+      ["net1a","net5a","net1b","net5b","roiB"].forEach(id => {
+        const raw = parseFloat($(id).textContent.replace(/[^0-9.-]/g, "")) || 0;
+        $(id).className = raw >= 0 ? "green" : "red";
+      });
+
+      // Comparison summary table (dynamic values)
+      $("cmpA5").textContent = money(a5);
+      $("cmpB5").textContent = money(b5);
+      $("cmpA1").textContent = money(a1);
+      $("cmpB1").textContent = money(b1);
+      $("cmpDurA").textContent = `${abaDuration.toFixed(1)} years`;
+      $("cmpDurB").textContent = `${brainyMonths.toFixed(0)} months`;
+      $("cmpNet5").textContent = money(net5);
+      $("cmpRet").textContent = `$${(b5 > 0 ? a5 / b5 : 0).toFixed(2)} per $1 spent`;
+
+      // Detail table
+      const tb = $("resultsTable").querySelector("tbody");
+      tb.innerHTML = "";
+      rows.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r.year}</td>
+          <td>${Math.round(r.newMembers).toLocaleString()}</td>
+          <td>${Math.round(r.abaActive).toLocaleString()}</td>
+          <td>${money(r.abaCost)}</td>
+          <td>${money(r.episodeCost)}</td>
+          <td>${money(r.contCost)}</td>
+          <td>${money(r.bTotal)}</td>
+          <td class="${r.net >= 0 ? 'green' : 'red'}">${money(r.net)}</td>
+          <td class="${r.cumNet >= 0 ? 'green' : 'red'}">${money(r.cumNet)}</td>`;
+        tb.appendChild(tr);
+      });
+
+      renderCharts(rows);
+      latestRows = rows;
+      latestSummary = {a1, b1, a5, b5, net1, net5, roiB, beTxt};
+    }
+
+    function renderCharts(rows){
+      const labels = rows.map(r => `Year ${r.year}`);
+      const a = rows.map(r => r.abaCost);
+      const b = rows.map(r => r.bTotal);
+      const c = rows.map(r => r.cumNet);
+
+      if(costTrendChart) costTrendChart.destroy();
+      if(netTrendChart) netTrendChart.destroy();
+
+      costTrendChart = new Chart($("costTrendChart"), {
+        type:"line",
+        data:{
+          labels,
+          datasets:[
+            {label:"Program A cost", data:a, borderColor:"#2f73f1", backgroundColor:"rgba(47,115,241,.10)", borderWidth:3, tension:.25, fill:false},
+            {label:"Program B cost", data:b, borderColor:"#7b47ff", backgroundColor:"rgba(123,71,255,.10)", borderWidth:3, tension:.25, fill:false}
+          ]
+        },
+        options:{plugins:{legend:{position:"bottom"}}, scales:{y:{ticks:{callback:v => "$" + Number(v).toLocaleString()}}}}
+      });
+
+      netTrendChart = new Chart($("netTrendChart"), {
+        type:"line",
+        data:{
+          labels,
+          datasets:[
+            {label:"Cumulative net (A−B)", data:c, borderColor:"#0ea04b", backgroundColor:"rgba(14,160,75,.12)", borderWidth:3, tension:.25, fill:true}
+          ]
+        },
+        options:{plugins:{legend:{position:"bottom"}}, scales:{y:{ticks:{callback:v => "$" + Number(v).toLocaleString()}}}}
+      });
+    }
+
+    function downloadCSV(){
+      if(!latestRows.length) calculate();
+      const s = latestSummary;
+      let csv = "BrainyAct ROI Calculator v6\n";
+      csv += "Generated," + new Date().toISOString() + "\n\n";
+      csv += "Summary,Value\n";
+      csv += `Program A 1-Year,${s.a1}\nProgram B 1-Year,${s.b1}\nProgram A 5-Year,${s.a5}\nProgram B 5-Year,${s.b5}\n`;
+      csv += `Year 1 Net (A-B),${s.net1}\n5-Year Net (A-B),${s.net5}\nROI B,${s.roiB}\nBreak-even,${s.beTxt}\n\n`;
+      csv += "Year,New Members,ABA Active Members,ABA Program Cost,BrainyAct Episode Cost,Brainy->ABA Continuation,Program B Total Cost,Net Savings (A-B),Cumulative Net\n";
+      latestRows.forEach(r => {
+        csv += [r.year, r.newMembers, r.abaActive, r.abaCost, r.episodeCost, r.contCost, r.bTotal, r.net, r.cumNet].join(",") + "\n";
+      });
+      const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "brainyact_roi_v6_results.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function saveScenario(){ localStorage.setItem(scenarioKey, JSON.stringify(getScenarioObject())); alert("Scenario saved."); }
+    function loadScenario(){
+      const raw = localStorage.getItem(scenarioKey);
+      if(!raw){ alert("No saved scenario found."); return; }
+      try{ setScenarioObject(JSON.parse(raw)); calculate(); alert("Scenario loaded."); }
+      catch{ alert("Saved scenario is invalid."); }
+    }
+    function clearScenario(){ localStorage.removeItem(scenarioKey); alert("Saved scenario cleared."); }
+
+    function setLogoDataUrl(dataUrl){
+      $("logoSlot").innerHTML = `<img alt="Brand logo" src="${dataUrl}">`;
+      localStorage.setItem(logoKey, dataUrl);
+    }
+    function resetLogo(){
+      $("logoSlot").innerHTML = `<div class="logo-placeholder">YOUR<br>LOGO</div>`;
+      localStorage.removeItem(logoKey);
+      $("logoInput").value = "";
+    }
+    function loadSavedLogo(){
+      const saved = localStorage.getItem(logoKey);
+      if(saved) setLogoDataUrl(saved);
+    }
+
+    // Wire all inputs
+    document.querySelectorAll("input,select").forEach(el => {
+      el.addEventListener("input", calculate);
+      el.addEventListener("change", calculate);
+    });
+    $("logoInput").addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => setLogoDataUrl(reader.result);
+      reader.readAsDataURL(file);
+    });
+    $("clearLogoBtn").addEventListener("click", resetLogo);
+    $("recalcBtn").addEventListener("click", calculate);
+    $("downloadCsvBtn").addEventListener("click", downloadCSV);
+    $("saveScenarioBtn").addEventListener("click", saveScenario);
+    $("loadScenarioBtn").addEventListener("click", loadScenario);
+    $("clearScenarioBtn").addEventListener("click", clearScenario);
+    $("printBtn").addEventListener("click", () => window.print());
+
+    loadSavedLogo();
+    calculate();
+  </script>
+</body>
+</html>
